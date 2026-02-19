@@ -37,7 +37,9 @@ workflows:
         - witt_secrets
       vars:
         BUNDLE_ID: com.webblabs.witt
-        APP_STORE_APP_ID: placeholder
+        # TODO: Set APP_STORE_APP_ID to the numeric App Store app ID from App Store Connect
+        # App Store Connect → Apps → [Your App] → General → App Information → Apple ID
+        APP_STORE_APP_ID: SET_ME_IN_CODEMAGIC_DASHBOARD
     scripts:
       - name: Bootstrap monorepo
         script: |

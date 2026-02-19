@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mixpanel_flutter/mixpanel_flutter.dart';
@@ -6,14 +7,18 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Initializes all services before the app starts.
-/// Called once from main() before runApp().
+/// Initializes all services and runs the app.
+/// Single entry point — call Bootstrap.run(app) from main().
 class Bootstrap {
   Bootstrap._();
 
   static Mixpanel? _mixpanel;
 
-  static Future<void> init() async {
+  /// Initializes all services then calls [appRunner] inside Sentry's zone
+  /// so Flutter framework errors are captured automatically.
+  static Future<void> run(Widget app) async {
+    WidgetsFlutterBinding.ensureInitialized();
+
     // Load environment config
     const env = String.fromEnvironment('ENV', defaultValue: 'dev');
     await dotenv.load(fileName: '.env.$env');
@@ -27,17 +32,6 @@ class Bootstrap {
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
       debug: kDebugMode,
     );
-
-    // Initialize Sentry error tracking
-    final sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
-    if (sentryDsn.isNotEmpty) {
-      await SentryFlutter.init((options) {
-        options.dsn = sentryDsn;
-        options.tracesSampleRate = kDebugMode ? 0.0 : 1.0;
-        options.environment = env;
-        options.debug = kDebugMode;
-      });
-    }
 
     // Initialize Mixpanel analytics
     final mixpanelToken = dotenv.env['MIXPANEL_TOKEN'] ?? '';
@@ -56,6 +50,15 @@ class Bootstrap {
       OneSignal.initialize(oneSignalAppId);
       await OneSignal.Notifications.requestPermission(true);
     }
+
+    // Initialize Sentry last — wraps runApp so all Flutter errors are captured.
+    final sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
+    await SentryFlutter.init((options) {
+      options.dsn = sentryDsn; // empty string = disabled (no-op)
+      options.tracesSampleRate = kDebugMode ? 0.0 : 1.0;
+      options.environment = env;
+      options.debug = kDebugMode;
+    }, appRunner: () => runApp(app));
   }
 
   /// Convenience accessor for the Supabase client.
