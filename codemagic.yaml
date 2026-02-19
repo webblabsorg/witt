@@ -1,0 +1,90 @@
+workflows:
+  android-release:
+    name: Android Release
+    max_build_duration: 60
+    environment:
+      flutter: 3.38.7
+      java: 17
+      groups:
+        - witt_secrets
+    scripts:
+      - name: Bootstrap monorepo
+        script: |
+          dart pub global activate melos
+          melos bootstrap
+      - name: Run tests
+        script: melos test
+      - name: Build Android release
+        script: |
+          cd apps/witt_app
+          flutter build appbundle --release \
+            --dart-define=ENV=prod
+    artifacts:
+      - apps/witt_app/build/app/outputs/bundle/release/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+
+  ios-release:
+    name: iOS Release
+    max_build_duration: 60
+    environment:
+      flutter: 3.38.7
+      xcode: latest
+      cocoapods: default
+      groups:
+        - witt_secrets
+      vars:
+        BUNDLE_ID: com.webblabs.witt
+        APP_STORE_APP_ID: placeholder
+    scripts:
+      - name: Bootstrap monorepo
+        script: |
+          dart pub global activate melos
+          melos bootstrap
+      - name: Run tests
+        script: melos test
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files $BUNDLE_ID \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Build iOS release
+        script: |
+          cd apps/witt_app
+          flutter build ipa --release \
+            --dart-define=ENV=prod \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - apps/witt_app/build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  macos-release:
+    name: macOS Release
+    max_build_duration: 60
+    environment:
+      flutter: 3.38.7
+      xcode: latest
+      groups:
+        - witt_secrets
+      vars:
+        BUNDLE_ID: com.webblabs.witt.macos
+    scripts:
+      - name: Bootstrap monorepo
+        script: |
+          dart pub global activate melos
+          melos bootstrap
+      - name: Build macOS release
+        script: |
+          cd apps/witt_app
+          flutter build macos --release \
+            --dart-define=ENV=prod
+    artifacts:
+      - apps/witt_app/build/macos/Build/Products/Release/*.app

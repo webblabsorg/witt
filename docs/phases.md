@@ -34,7 +34,7 @@ Phase 5: Polish, Platform & Launch
 
 ## Phase 0 — Project Scaffold & Infrastructure
 
-**Goal:** Monorepo, CI/CD, Supabase, database schema, foundational packages. No UI.  
+**Goal:** Monorepo, CI/CD, Supabase, database schema, foundational packages. No feature UI — a blank 5-tab navigation scaffold is acceptable as the app shell placeholder.  
 **Duration:** 3 sessions (~1 week)
 
 ---

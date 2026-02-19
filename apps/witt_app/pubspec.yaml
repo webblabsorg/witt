@@ -53,6 +53,15 @@ dependencies:
   # Environment config
   flutter_dotenv: ^5.2.1
 
+  # Error tracking
+  sentry_flutter: ^8.14.0
+
+  # Analytics
+  mixpanel_flutter: ^2.3.3
+
+  # Push notifications
+  onesignal_flutter: ^5.2.10
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
