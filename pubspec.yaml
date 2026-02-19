@@ -1,0 +1,19 @@
+name: witt_workspace
+description: Witt monorepo workspace root.
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+workspace:
+  - apps/witt_app
+  - packages/witt_core
+  - packages/witt_ui
+  - packages/witt_api
+  - packages/witt_ai
+  - packages/witt_auth
+  - packages/witt_storage
+  - packages/witt_monetization
+
+dev_dependencies:
+  melos: ^7.4.0

@@ -1,0 +1,69 @@
+name: witt_app
+description: "Witt — The AI-Powered Study Companion for Every Student, Everywhere"
+publish_to: none
+resolution: workspace
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.38.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Monorepo packages
+  witt_core:
+    path: ../../packages/witt_core
+  witt_ui:
+    path: ../../packages/witt_ui
+  witt_api:
+    path: ../../packages/witt_api
+  witt_ai:
+    path: ../../packages/witt_ai
+  witt_auth:
+    path: ../../packages/witt_auth
+  witt_storage:
+    path: ../../packages/witt_storage
+  witt_monetization:
+    path: ../../packages/witt_monetization
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Supabase
+  supabase_flutter: ^2.9.0
+
+  # Local storage
+  hive_flutter: ^1.1.0
+  sqflite: ^2.4.2
+  path_provider: ^2.1.5
+
+  # Networking
+  dio: ^5.8.0+1
+
+  # Code generation annotations
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Environment config
+  flutter_dotenv: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.14
+  freezed: ^3.0.0
+  json_serializable: ^6.9.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env.dev
+    - .env.staging
+    - .env.prod

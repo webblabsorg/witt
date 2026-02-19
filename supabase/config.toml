@@ -1,0 +1,19 @@
+[project]
+id = "ovchpewtnpglnlveblgd"
+
+[api]
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://ovchpewtnpglnlveblgd.supabase.co/**"]
+
+[auth.external.apple]
+enabled = true
+
+[auth.external.google]
+enabled = true
