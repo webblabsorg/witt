@@ -5,6 +5,7 @@
 library;
 
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NotificationService {
   NotificationService._();
@@ -88,28 +89,45 @@ class NotificationService {
 
   // ── Internal ──────────────────────────────────────────────────────────────
 
-  /// Send a notification to specific users by their external user IDs.
-  /// In production this should be done server-side via Supabase Edge Function
-  /// calling the OneSignal REST API with the app's REST API key.
-  /// Client-side we use OneSignal's in-app messaging as a fallback.
+  /// Resolves the Supabase user IDs of all members of a study group by name.
+  /// Used to build the recipient list for group-post notifications.
+  static Future<List<String>> resolveGroupMemberIds(String groupName) async {
+    try {
+      final rows =
+          await Supabase.instance.client.rpc(
+                'get_group_member_ids',
+                params: {'p_group_name': groupName},
+              )
+              as List<dynamic>;
+      return rows.map((r) => r.toString()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Dispatches a push notification to [userIds] via the `send-notification`
+  /// Supabase Edge Function, which calls the OneSignal REST API server-side.
+  /// The OneSignal REST API Key is stored as a Supabase secret and never
+  /// exposed in client code.
   static Future<void> _sendToUsers({
     required List<String> userIds,
     required String title,
     required String body,
     Map<String, dynamic>? data,
   }) async {
-    // Sending push to other users requires a server-side REST call with the
-    // OneSignal REST API Key (never expose in client code).
-    // Wire a Supabase Edge Function that calls:
-    //   POST https://onesignal.com/api/v1/notifications
-    //   { include_external_user_ids: userIds, headings: {en: title}, ... }
-    // Trigger points are wired — replace this body with an RPC call.
-    assert(
-      userIds.isNotEmpty ||
-          title.isNotEmpty ||
-          body.isNotEmpty ||
-          data != null ||
-          true,
-    );
+    if (userIds.isEmpty) return;
+    try {
+      await Supabase.instance.client.functions.invoke(
+        'send-notification',
+        body: {
+          'userIds': userIds,
+          'title': title,
+          'body': body,
+          if (data != null) 'data': data,
+        },
+      );
+    } catch (_) {
+      // Non-fatal: notification delivery failure must not break app flow.
+    }
   }
 }

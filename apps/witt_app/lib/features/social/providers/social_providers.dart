@@ -345,11 +345,15 @@ class FeedNotifier extends Notifier<List<SocialPost>> {
           params: {'p_user_id': uid},
         );
         // Notify group members if this post is tagged to a group
-        // (In production: pass group member IDs from server; here we
-        // trigger the service hook — the Edge Function resolves members.)
         if (tags.isNotEmpty) {
+          final memberIds = await NotificationService.resolveGroupMemberIds(
+            tags.first,
+          );
+          // Exclude the poster themselves
+          final uid2 = Supabase.instance.client.auth.currentUser?.id;
+          final recipients = memberIds.where((id) => id != uid2).toList();
           await NotificationService.notifyGroupPost(
-            memberUserIds: const [], // resolved server-side via Edge Function
+            memberUserIds: recipients,
             groupName: tags.first,
             authorName: 'You',
           );
