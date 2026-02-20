@@ -45,5 +45,8 @@ macos/Pods/
 **/android/key.properties
 *.jks
 
+# Build outputs (APK, IPA — too large for GitHub)
+builds/
+
 # Snapshots
 .snapshots/
