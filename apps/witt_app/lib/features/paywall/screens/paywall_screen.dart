@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
-class PaywallScreen extends StatelessWidget {
+import '../../onboarding/onboarding_state.dart';
+
+class PaywallScreen extends ConsumerWidget {
   const PaywallScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -52,7 +55,10 @@ class PaywallScreen extends StatelessWidget {
                 ],
                 ctaLabel: 'Continue with Free',
                 ctaVariant: WittButtonVariant.outline,
-                onTap: () => context.go('/home'),
+                onTap: () async {
+                  await ref.read(onboardingProvider.notifier).complete();
+                  if (context.mounted) context.go('/home');
+                },
               ),
               const SizedBox(height: WittSpacing.lg),
 
@@ -73,7 +79,7 @@ class PaywallScreen extends StatelessWidget {
                   'Ad-free + cross-device sync',
                 ],
                 ctaLabel: 'Start Free Trial',
-                onTap: () => context.go('/onboarding/feature-comparison'),
+                onTap: () => context.push('/onboarding/feature-comparison'),
               ),
               const SizedBox(height: WittSpacing.lg),
 
@@ -92,7 +98,7 @@ class PaywallScreen extends StatelessWidget {
                   'Billed annually',
                 ],
                 ctaLabel: 'Subscribe Yearly',
-                onTap: () => context.go('/onboarding/free-trial'),
+                onTap: () => context.push('/onboarding/free-trial'),
               ),
               const SizedBox(height: WittSpacing.xxl),
 
@@ -255,12 +261,13 @@ class _PlanCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.check_circle_rounded,
-                        color: WittColors.success, size: 18),
-                    const SizedBox(width: WittSpacing.sm),
-                    Expanded(
-                      child: Text(f, style: theme.textTheme.bodyMedium),
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: WittColors.success,
+                      size: 18,
                     ),
+                    const SizedBox(width: WittSpacing.sm),
+                    Expanded(child: Text(f, style: theme.textTheme.bodyMedium)),
                   ],
                 ),
               ),

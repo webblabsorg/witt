@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
-class FeatureComparisonScreen extends StatelessWidget {
+import '../../onboarding/onboarding_state.dart';
+
+class FeatureComparisonScreen extends ConsumerWidget {
   const FeatureComparisonScreen({super.key});
 
   static const _features = [
@@ -23,7 +26,7 @@ class FeatureComparisonScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -41,7 +44,10 @@ class FeatureComparisonScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    onPressed: () => context.go('/home'),
+                    onPressed: () async {
+                      await ref.read(onboardingProvider.notifier).complete();
+                      if (context.mounted) context.go('/home');
+                    },
                     style: IconButton.styleFrom(
                       backgroundColor: isDark
                           ? WittColors.surfaceVariantDark
@@ -98,7 +104,8 @@ class FeatureComparisonScreen extends StatelessWidget {
                     // Column headers
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: WittSpacing.sm),
+                        horizontal: WittSpacing.sm,
+                      ),
                       child: Row(
                         children: [
                           const Expanded(child: SizedBox()),
@@ -141,7 +148,7 @@ class FeatureComparisonScreen extends StatelessWidget {
                     // CTA
                     WittButton(
                       label: 'Upgrade to Premium',
-                      onPressed: () => context.go('/onboarding/free-trial'),
+                      onPressed: () => context.push('/onboarding/free-trial'),
                       isFullWidth: true,
                       size: WittButtonSize.lg,
                       gradient: WittColors.premiumGradient,

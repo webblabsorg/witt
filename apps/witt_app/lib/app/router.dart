@@ -15,6 +15,9 @@ import '../features/paywall/screens/paywall_screen.dart';
 import '../features/paywall/screens/feature_comparison_screen.dart';
 import '../features/paywall/screens/free_trial_screen.dart';
 import '../features/home/screens/home_screen.dart';
+import '../features/home/screens/search_screen.dart';
+import '../features/home/screens/notifications_screen.dart';
+import '../features/home/screens/play_hub_screen.dart';
 import '../screens/learn/learn_screen.dart';
 import '../screens/sage/sage_screen.dart';
 import '../screens/social/social_screen.dart';
@@ -112,18 +115,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'play',
-                    builder: (_, __) =>
-                        const _PlaceholderScreen(title: 'Play Hub'),
+                    builder: (_, __) => const PlayHubScreen(),
                   ),
                   GoRoute(
                     path: 'search',
-                    builder: (_, __) =>
-                        const _PlaceholderScreen(title: 'Search'),
+                    builder: (_, __) => const SearchScreen(),
                   ),
                   GoRoute(
                     path: 'notifications',
-                    builder: (_, __) =>
-                        const _PlaceholderScreen(title: 'Notifications'),
+                    builder: (_, __) => const NotificationsScreen(),
                   ),
                 ],
               ),
@@ -172,18 +172,4 @@ final routerProvider = Provider<GoRouter>((ref) {
 String _initialLocation(OnboardingData onboarding, AuthState auth) {
   if (!onboarding.isCompleted) return '/onboarding/splash';
   return '/home';
-}
-
-/// Temporary placeholder for routes not yet implemented
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title — coming soon')),
-    );
-  }
 }

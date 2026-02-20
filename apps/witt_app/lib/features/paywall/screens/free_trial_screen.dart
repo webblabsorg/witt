@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
-class FreeTrialScreen extends StatelessWidget {
+import '../../onboarding/onboarding_state.dart';
+
+class FreeTrialScreen extends ConsumerWidget {
   const FreeTrialScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -25,17 +28,17 @@ class FreeTrialScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    onPressed: () => context.go('/home'),
+                    onPressed: () async {
+                      await ref.read(onboardingProvider.notifier).complete();
+                      if (context.mounted) context.go('/home');
+                    },
                     style: IconButton.styleFrom(
                       backgroundColor: isDark
                           ? WittColors.surfaceVariantDark
                           : WittColors.surfaceVariant,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('RESTORE'),
-                  ),
+                  TextButton(onPressed: () {}, child: const Text('RESTORE')),
                 ],
               ),
             ),
@@ -75,14 +78,12 @@ class FreeTrialScreen extends StatelessWidget {
                     _TimelineStep(
                       dotColor: WittColors.secondary,
                       title: 'In 6 days',
-                      subtitle:
-                          "Get reminded about your trial's expiration",
+                      subtitle: "Get reminded about your trial's expiration",
                     ),
                     _TimelineStep(
                       dotColor: WittColors.primary,
                       title: 'In 7 days',
-                      subtitle:
-                          'You will be charged — cancel any time earlier',
+                      subtitle: 'You will be charged — cancel any time earlier',
                       isLast: true,
                     ),
 
@@ -109,7 +110,10 @@ class FreeTrialScreen extends StatelessWidget {
                     // CTA
                     WittButton(
                       label: 'Start my Free Trial',
-                      onPressed: () => context.go('/home'),
+                      onPressed: () async {
+                        await ref.read(onboardingProvider.notifier).complete();
+                        if (context.mounted) context.go('/home');
+                      },
                       isFullWidth: true,
                       size: WittButtonSize.lg,
                       gradient: WittColors.primaryGradient,
@@ -126,7 +130,9 @@ class FreeTrialScreen extends StatelessWidget {
                               : WittColors.textTertiary,
                         ),
                         children: [
-                          const TextSpan(text: 'By subscribing, you agree to our\n'),
+                          const TextSpan(
+                            text: 'By subscribing, you agree to our\n',
+                          ),
                           TextSpan(
                             text: 'Privacy Policy',
                             style: const TextStyle(
@@ -186,8 +192,7 @@ class _TimelineStep extends StatelessWidget {
             width: 32,
             child: Column(
               children: [
-                if (!isFirst)
-                  Container(width: 2, height: 20, color: lineColor),
+                if (!isFirst) Container(width: 2, height: 20, color: lineColor),
                 Container(
                   width: 16,
                   height: 16,
@@ -197,9 +202,7 @@ class _TimelineStep extends StatelessWidget {
                   ),
                 ),
                 if (!isLast)
-                  Expanded(
-                    child: Container(width: 2, color: lineColor),
-                  ),
+                  Expanded(child: Container(width: 2, color: lineColor)),
               ],
             ),
           ),
