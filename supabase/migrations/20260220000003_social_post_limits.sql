@@ -66,14 +66,16 @@ $$;
 
 create or replace function public.get_posts_today(p_user_id uuid)
 returns int
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    (select post_count
-     from public.social_post_daily_limits
-     where user_id = p_user_id and post_date = current_date),
-    0
-  );
+declare
+  v_count int;
+begin
+  select post_count into v_count
+  from public.social_post_daily_limits
+  where user_id = p_user_id and post_date = current_date;
+  return coalesce(v_count, 0);
+end;
 $$;
