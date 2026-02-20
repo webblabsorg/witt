@@ -6,6 +6,7 @@ import 'package:mixpanel_flutter/mixpanel_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:subrail_flutter/subrail_flutter.dart';
 
 import '../features/onboarding/onboarding_state.dart';
 import '../core/persistence/hive_boxes.dart';
@@ -37,6 +38,30 @@ class Bootstrap {
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
       debug: kDebugMode,
     );
+
+    // Initialize Subrail billing SDK
+    final subrailApiKey = dotenv.env['SUBRAIL_API_KEY'] ?? '';
+    if (subrailApiKey.isNotEmpty) {
+      await Subrail.configure(
+        apiKey: subrailApiKey,
+        useSandbox: kDebugMode,
+        logLevel: kDebugMode ? LogLevel.debug : LogLevel.warn,
+      );
+      // Sync Supabase user identity with Subrail on auth state changes
+      Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+        final user = data.session?.user;
+        if (user != null) {
+          await Subrail.logIn(user.id);
+        } else {
+          await Subrail.logOut();
+        }
+      });
+      // Log in immediately if already authenticated
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      if (currentUser != null) {
+        await Subrail.logIn(currentUser.id);
+      }
+    }
 
     // Initialize Mixpanel analytics
     final mixpanelToken = dotenv.env['MIXPANEL_TOKEN'] ?? '';

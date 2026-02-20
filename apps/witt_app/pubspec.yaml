@@ -28,6 +28,8 @@ dependencies:
     path: ../../packages/witt_storage
   witt_monetization:
     path: ../../packages/witt_monetization
+  subrail_flutter:
+    path: ../../../subrail/dev/packages/flutter-sdk
 
   # State management
   flutter_riverpod: ^2.6.1

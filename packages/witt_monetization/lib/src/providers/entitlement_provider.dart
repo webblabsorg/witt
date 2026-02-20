@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:subrail_flutter/subrail_flutter.dart';
 import '../models/entitlement.dart';
 
 // ── Entitlement state ─────────────────────────────────────────────────────
@@ -29,16 +30,12 @@ class EntitlementNotifier extends Notifier<Entitlement> {
   /// Unlock a single exam (exam-specific purchase).
   void unlockExam(String examId) {
     if (state.unlockedExamIds.contains(examId)) return;
-    state = state.copyWith(
-      unlockedExamIds: [...state.unlockedExamIds, examId],
-    );
+    state = state.copyWith(unlockedExamIds: [...state.unlockedExamIds, examId]);
   }
 
   /// Revoke (e.g. subscription expired or cancelled).
   void revoke() {
-    state = state.copyWith(
-      status: SubscriptionStatus.expired,
-    );
+    state = state.copyWith(status: SubscriptionStatus.expired);
   }
 
   /// Reset to free (e.g. on sign-out).
@@ -56,9 +53,9 @@ class EntitlementNotifier extends Notifier<Entitlement> {
   }
 }
 
-final entitlementProvider =
-    NotifierProvider<EntitlementNotifier, Entitlement>(
-        EntitlementNotifier.new);
+final entitlementProvider = NotifierProvider<EntitlementNotifier, Entitlement>(
+  EntitlementNotifier.new,
+);
 
 // ── Convenience derived providers ─────────────────────────────────────────
 
@@ -66,8 +63,10 @@ final isPaidProvider = Provider<bool>((ref) {
   return ref.watch(entitlementProvider).isPremium;
 });
 
-final isExamUnlockedByEntitlementProvider =
-    Provider.family<bool, String>((ref, examId) {
+final isExamUnlockedByEntitlementProvider = Provider.family<bool, String>((
+  ref,
+  examId,
+) {
   return ref.watch(entitlementProvider).isExamUnlocked(examId);
 });
 
@@ -90,12 +89,11 @@ class PurchaseFlowState {
     PurchaseFlowStatus? status,
     String? productId,
     String? errorMessage,
-  }) =>
-      PurchaseFlowState(
-        status: status ?? this.status,
-        productId: productId ?? this.productId,
-        errorMessage: errorMessage,
-      );
+  }) => PurchaseFlowState(
+    status: status ?? this.status,
+    productId: productId ?? this.productId,
+    errorMessage: errorMessage,
+  );
 
   static const idle = PurchaseFlowState(status: PurchaseFlowStatus.idle);
 }
@@ -104,61 +102,138 @@ class PurchaseFlowNotifier extends Notifier<PurchaseFlowState> {
   @override
   PurchaseFlowState build() => PurchaseFlowState.idle;
 
-  /// Initiates a purchase. In production this calls the Subrail SDK.
-  /// Currently implemented as a simulated flow for Phase 3.
+  /// Initiates a purchase via the Subrail SDK.
   Future<void> purchase(PurchaseProduct product) async {
     state = state.copyWith(
       status: PurchaseFlowStatus.loading,
       productId: product.id,
     );
-
-    // Simulate network delay for purchase flow
-    await Future.delayed(const Duration(seconds: 2));
-
-    // In production: call Subrail SDK here and await result.
-    // On success, grant entitlement. On failure, set error.
-    // For now: simulate success.
-    ref.read(entitlementProvider.notifier).grant(
-          plan: product.plan,
-          status: SubscriptionStatus.trial,
-          trialEndsAt: DateTime.now().add(const Duration(days: 7)),
-          expiresAt: product.plan == SubscriptionPlan.premiumYearly
-              ? DateTime.now().add(const Duration(days: 365))
-              : DateTime.now().add(const Duration(days: 30)),
+    try {
+      final products = await Subrail.getProducts([product.id]);
+      if (products.isEmpty) {
+        state = state.copyWith(
+          status: PurchaseFlowStatus.error,
+          errorMessage: 'Product not found: ${product.id}',
         );
-
-    state = state.copyWith(
-      status: PurchaseFlowStatus.success,
-      productId: product.id,
-    );
+        return;
+      }
+      final result = await Subrail.purchaseProduct(products.first);
+      _applyCustomerInfo(result.customerInfo, product.plan);
+      state = state.copyWith(
+        status: PurchaseFlowStatus.success,
+        productId: product.id,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        status: PurchaseFlowStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
-  /// Restore previous purchases.
+  /// Restore previous purchases via the Subrail SDK.
   Future<void> restore() async {
     state = state.copyWith(status: PurchaseFlowStatus.loading);
-    await Future.delayed(const Duration(seconds: 1));
-    // In production: call Subrail SDK restore here.
-    // For now: no-op (no prior purchase to restore in dev).
-    state = PurchaseFlowState.idle;
+    try {
+      final customerInfo = await Subrail.restorePurchases();
+      _applyCustomerInfo(customerInfo, null);
+      state = PurchaseFlowState.idle;
+    } catch (e) {
+      state = state.copyWith(
+        status: PurchaseFlowStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
-  /// Unlock a single exam.
+  /// Unlock a single exam via the Subrail SDK.
   Future<void> purchaseExam(String examId, double priceUsd) async {
+    final productId = 'exam_$examId';
     state = state.copyWith(
       status: PurchaseFlowStatus.loading,
-      productId: 'exam_$examId',
+      productId: productId,
     );
-    await Future.delayed(const Duration(seconds: 2));
-    ref.read(entitlementProvider.notifier).unlockExam(examId);
-    state = state.copyWith(status: PurchaseFlowStatus.success);
+    try {
+      final products = await Subrail.getProducts([productId]);
+      if (products.isEmpty) {
+        state = state.copyWith(
+          status: PurchaseFlowStatus.error,
+          errorMessage: 'Exam product not found: $productId',
+        );
+        return;
+      }
+      await Subrail.purchaseProduct(products.first);
+      ref.read(entitlementProvider.notifier).unlockExam(examId);
+      state = state.copyWith(status: PurchaseFlowStatus.success);
+    } catch (e) {
+      state = state.copyWith(
+        status: PurchaseFlowStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   void reset() => state = PurchaseFlowState.idle;
+
+  /// Maps a Subrail [CustomerInfo] response to the app's [Entitlement] model
+  /// and grants it via [EntitlementNotifier].
+  void _applyCustomerInfo(CustomerInfo info, SubscriptionPlan? hintPlan) {
+    final active = info.entitlements.active;
+
+    // Determine plan from active entitlement identifiers
+    SubscriptionPlan plan = SubscriptionPlan.free;
+    SubscriptionStatus status = SubscriptionStatus.none;
+    DateTime? expiresAt;
+    DateTime? trialEndsAt;
+    bool isLifetime = false;
+
+    if (active.containsKey('premium_yearly') ||
+        active.containsKey('witt_premium_yearly')) {
+      plan = SubscriptionPlan.premiumYearly;
+    } else if (active.containsKey('premium_monthly') ||
+        active.containsKey('witt_premium_monthly')) {
+      plan = SubscriptionPlan.premiumMonthly;
+    } else if (active.containsKey('lifetime')) {
+      plan = SubscriptionPlan.premiumYearly;
+      isLifetime = true;
+    } else if (hintPlan != null && hintPlan != SubscriptionPlan.free) {
+      plan = hintPlan;
+    }
+
+    if (plan != SubscriptionPlan.free || isLifetime) {
+      final entitlement = active.values.isNotEmpty ? active.values.first : null;
+      if (entitlement != null) {
+        status = entitlement.periodType == PeriodType.trial
+            ? SubscriptionStatus.trial
+            : SubscriptionStatus.active;
+        if (entitlement.expirationDate != null) {
+          expiresAt = DateTime.tryParse(entitlement.expirationDate!);
+        }
+        if (entitlement.periodType == PeriodType.trial &&
+            entitlement.expirationDate != null) {
+          trialEndsAt = DateTime.tryParse(entitlement.expirationDate!);
+        }
+      } else {
+        status = SubscriptionStatus.active;
+      }
+    }
+
+    ref
+        .read(entitlementProvider.notifier)
+        .grant(
+          plan: plan,
+          status: status,
+          expiresAt: expiresAt,
+          trialEndsAt: trialEndsAt,
+          isLifetime: isLifetime,
+        );
+  }
 }
 
 final purchaseFlowProvider =
     NotifierProvider<PurchaseFlowNotifier, PurchaseFlowState>(
-        PurchaseFlowNotifier.new);
+      PurchaseFlowNotifier.new,
+    );
 
 // ── Available products catalog ────────────────────────────────────────────
 

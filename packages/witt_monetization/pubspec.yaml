@@ -15,6 +15,8 @@ dependencies:
     path: ../witt_core
   witt_api:
     path: ../witt_api
+  subrail_flutter:
+    path: ../../../subrail/dev/packages/flutter-sdk
 
 dev_dependencies:
   flutter_test:

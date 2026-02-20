@@ -20,6 +20,7 @@ Never commit `.env.*` files (they are gitignored). Only `.env.example` is commit
 | GROQ_API_KEY          | Groq API key (free-tier AI, non-exam features)           | console.groq.com → API Keys                          |
 | OPENAI_API_KEY        | OpenAI API key (paid-tier AI, non-exam features)         | platform.openai.com → API Keys                       |
 | CLAUDE_API_KEY        | Anthropic Claude API key (exam question generation only) | console.anthropic.com → API Keys                     |
+| SUBRAIL_API_KEY       | Subrail billing SDK API key (purchase flows)             | Subrail Dashboard → Project Settings → API Keys      |
 
 ## SDK Activation Notes
 
@@ -27,6 +28,7 @@ Never commit `.env.*` files (they are gitignored). Only `.env.example` is commit
 - **Mixpanel**: SDK initializes only if `MIXPANEL_TOKEN` is non-empty. Tracks `app_open` on launch.
 - **OneSignal**: SDK initializes only if `ONESIGNAL_APP_ID` is non-empty. Requests notification permission on first launch.
 - **Supabase**: Required in all environments. App will crash on launch if missing.
+- **Subrail**: SDK initializes only if `SUBRAIL_API_KEY` is non-empty. Purchase flows fall back to error state if missing. Uses sandbox mode in debug builds automatically.
 
 ## Auth Providers (Supabase Dashboard)
 
