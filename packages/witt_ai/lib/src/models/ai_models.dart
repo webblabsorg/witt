@@ -45,19 +45,15 @@ class AiMessage {
     String? content,
     DateTime? createdAt,
     bool? isStreaming,
-  }) =>
-      AiMessage(
-        id: id ?? this.id,
-        role: role ?? this.role,
-        content: content ?? this.content,
-        createdAt: createdAt ?? this.createdAt,
-        isStreaming: isStreaming ?? this.isStreaming,
-      );
+  }) => AiMessage(
+    id: id ?? this.id,
+    role: role ?? this.role,
+    content: content ?? this.content,
+    createdAt: createdAt ?? this.createdAt,
+    isStreaming: isStreaming ?? this.isStreaming,
+  );
 
-  Map<String, dynamic> toJson() => {
-        'role': role,
-        'content': content,
-      };
+  Map<String, dynamic> toJson() => {'role': role, 'content': content};
 }
 
 @immutable
@@ -89,15 +85,15 @@ class AiRequest {
   }
 
   String get edgeFunctionSlug => switch (feature) {
-        AiFeature.sageChat => 'ai-chat',
-        AiFeature.examGenerate => 'ai-exam-generate',
-        AiFeature.homework => 'ai-homework',
-        AiFeature.quizGenerate => 'ai-quiz-generate',
-        AiFeature.flashcardGenerate => 'ai-flashcard-generate',
-        AiFeature.summarize => 'ai-summarize',
-        AiFeature.transcribe => 'ai-transcribe',
-        AiFeature.tts => 'ai-tts',
-      };
+    AiFeature.sageChat => 'ai-chat',
+    AiFeature.examGenerate => 'ai-exam-generate',
+    AiFeature.homework => 'ai-homework',
+    AiFeature.quizGenerate => 'ai-quiz-generate',
+    AiFeature.flashcardGenerate => 'ai-flashcard-generate',
+    AiFeature.summarize => 'ai-summarize',
+    AiFeature.transcribe => 'ai-transcribe',
+    AiFeature.tts => 'ai-tts',
+  };
 }
 
 @immutable
@@ -141,7 +137,9 @@ class UsageRecord {
   final int dailyAttachments;
   final DateTime lastResetDate;
 
-  static const UsageRecord empty = UsageRecord(
+  static final _epoch = DateTime.utc(2000);
+
+  static final UsageRecord empty = UsageRecord(
     dailyMessages: 0,
     monthlyMessages: 0,
     dailyHomework: 0,
@@ -152,36 +150,35 @@ class UsageRecord {
     lastResetDate: _epoch,
   );
 
-  static const _epoch = DateTime.utc(2000);
-
   bool canUseFeature(AiFeature feature) => switch (feature) {
-        AiFeature.sageChat => dailyMessages < 10 && monthlyMessages < 300,
-        AiFeature.homework => dailyHomework < 5,
-        AiFeature.quizGenerate => dailyQuizGens < 1,
-        AiFeature.flashcardGenerate => dailyFlashcardGens < 1,
-        AiFeature.summarize => dailySummarizations < 3,
-        AiFeature.transcribe => false, // paid only
-        AiFeature.tts => false, // paid only
-        AiFeature.examGenerate => true, // always allowed (pool-limited)
-      };
+    AiFeature.sageChat => dailyMessages < 10 && monthlyMessages < 300,
+    AiFeature.homework => dailyHomework < 5,
+    AiFeature.quizGenerate => dailyQuizGens < 1,
+    AiFeature.flashcardGenerate => dailyFlashcardGens < 1,
+    AiFeature.summarize => dailySummarizations < 3,
+    AiFeature.transcribe => false, // paid only
+    AiFeature.tts => false, // paid only
+    AiFeature.examGenerate => true, // always allowed (pool-limited)
+  };
 
   String limitMessage(AiFeature feature) => switch (feature) {
-        AiFeature.sageChat => dailyMessages >= 10
-            ? "You've used all 10 messages today. Upgrade to Premium for unlimited access."
-            : "You've reached your monthly message limit. Upgrade to Premium.",
-        AiFeature.homework =>
-          "You've used all 5 homework solves today. Upgrade for unlimited.",
-        AiFeature.quizGenerate =>
-          "You've used your 1 free quiz generation today. Upgrade for unlimited.",
-        AiFeature.flashcardGenerate =>
-          "You've used your 1 free flashcard generation today. Upgrade for unlimited.",
-        AiFeature.summarize =>
-          "You've used all 3 free summarizations today. Upgrade for unlimited.",
-        AiFeature.transcribe =>
-          "Lecture transcription requires Premium. Upgrade to unlock.",
-        AiFeature.tts => "Text-to-speech requires Premium. Upgrade to unlock.",
-        AiFeature.examGenerate => '',
-      };
+    AiFeature.sageChat =>
+      dailyMessages >= 10
+          ? "You've used all 10 messages today. Upgrade to Premium for unlimited access."
+          : "You've reached your monthly message limit. Upgrade to Premium.",
+    AiFeature.homework =>
+      "You've used all 5 homework solves today. Upgrade for unlimited.",
+    AiFeature.quizGenerate =>
+      "You've used your 1 free quiz generation today. Upgrade for unlimited.",
+    AiFeature.flashcardGenerate =>
+      "You've used your 1 free flashcard generation today. Upgrade for unlimited.",
+    AiFeature.summarize =>
+      "You've used all 3 free summarizations today. Upgrade for unlimited.",
+    AiFeature.transcribe =>
+      "Lecture transcription requires Premium. Upgrade to unlock.",
+    AiFeature.tts => "Text-to-speech requires Premium. Upgrade to unlock.",
+    AiFeature.examGenerate => '',
+  };
 
   UsageRecord increment(AiFeature feature) {
     return UsageRecord(

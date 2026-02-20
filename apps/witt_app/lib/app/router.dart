@@ -5,7 +5,8 @@ import 'package:meta/meta.dart';
 
 import 'scaffold_with_nav.dart';
 import '../features/onboarding/onboarding_state.dart';
-import '../features/onboarding/screens/splash_screen.dart';
+import '../features/onboarding/screens/splash_screen.dart'
+    show SplashScreen, OnboardingCarouselScreen;
 import '../features/onboarding/screens/language_picker_screen.dart';
 import '../features/onboarding/screens/wizard_screen.dart';
 import '../features/auth/auth_state.dart';
@@ -60,6 +61,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding/splash',
         builder: (_, __) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/carousel',
+        builder: (_, __) => const OnboardingCarouselScreen(),
       ),
       GoRoute(
         path: '/onboarding/language',

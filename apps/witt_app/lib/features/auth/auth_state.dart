@@ -52,9 +52,11 @@ class AuthNotifier extends Notifier<AuthState> {
   // Persists the current session tokens to secure storage.
   Future<void> _persistSession(Session? session) async {
     if (session == null) return;
+    final refreshToken = session.refreshToken;
+    if (refreshToken == null) return;
     await SecureStorage.saveTokens(
       accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
+      refreshToken: refreshToken,
     );
     await SecureStorage.saveUserId(session.user.id);
   }

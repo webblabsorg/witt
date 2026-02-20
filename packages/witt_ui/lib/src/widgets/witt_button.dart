@@ -4,6 +4,7 @@ import '../theme/witt_colors.dart';
 import '../theme/witt_spacing.dart';
 
 enum WittButtonVariant { primary, secondary, outline, ghost, danger }
+
 enum WittButtonSize { sm, md, lg }
 
 class WittButton extends StatelessWidget {
@@ -64,7 +65,11 @@ class WittButton extends StatelessWidget {
           )
         else ...[
           if (icon != null) ...[
-            Icon(icon, size: WittSpacing.iconMd, color: _foregroundColor(theme)),
+            Icon(
+              icon,
+              size: WittSpacing.iconMd,
+              color: _foregroundColor(theme),
+            ),
             const SizedBox(width: WittSpacing.sm),
           ],
           Text(
@@ -76,7 +81,11 @@ class WittButton extends StatelessWidget {
           ),
           if (trailingIcon != null) ...[
             const SizedBox(width: WittSpacing.sm),
-            Icon(trailingIcon, size: WittSpacing.iconMd, color: _foregroundColor(theme)),
+            Icon(
+              trailingIcon,
+              size: WittSpacing.iconMd,
+              color: _foregroundColor(theme),
+            ),
           ],
         ],
       ],
@@ -109,60 +118,75 @@ class WittButton extends StatelessWidget {
 
     final style = switch (variant) {
       WittButtonVariant.primary => ElevatedButton.styleFrom(
-          backgroundColor: WittColors.primary,
-          foregroundColor: WittColors.textOnPrimary,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, height),
-          padding: EdgeInsets.symmetric(horizontal: hPad),
+        backgroundColor: WittColors.primary, // deep black
+        foregroundColor: WittColors.textOnPrimary, // white
+        minimumSize: Size(isFullWidth ? double.infinity : 0, height),
+        padding: EdgeInsets.symmetric(horizontal: hPad),
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: WittSpacing.borderRadiusMd,
         ),
+      ),
       WittButtonVariant.secondary => ElevatedButton.styleFrom(
-          backgroundColor: WittColors.secondary,
-          foregroundColor: WittColors.textOnSecondary,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, height),
-          padding: EdgeInsets.symmetric(horizontal: hPad),
+        backgroundColor: WittColors.secondary,
+        foregroundColor: WittColors.textOnSecondary,
+        minimumSize: Size(isFullWidth ? double.infinity : 0, height),
+        padding: EdgeInsets.symmetric(horizontal: hPad),
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: WittSpacing.borderRadiusMd,
         ),
+      ),
       WittButtonVariant.outline => OutlinedButton.styleFrom(
-          foregroundColor: WittColors.primary,
-          side: const BorderSide(color: WittColors.primary, width: 1.5),
-          minimumSize: Size(isFullWidth ? double.infinity : 0, height),
-          padding: EdgeInsets.symmetric(horizontal: hPad),
+        foregroundColor: WittColors.primary,
+        side: const BorderSide(color: WittColors.primary, width: 1.5),
+        minimumSize: Size(isFullWidth ? double.infinity : 0, height),
+        padding: EdgeInsets.symmetric(horizontal: hPad),
+        shape: const RoundedRectangleBorder(
+          borderRadius: WittSpacing.borderRadiusMd,
         ),
+      ),
       WittButtonVariant.ghost => TextButton.styleFrom(
-          foregroundColor: WittColors.primary,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, height),
-          padding: EdgeInsets.symmetric(horizontal: hPad),
-        ),
+        foregroundColor: WittColors.primary,
+        minimumSize: Size(isFullWidth ? double.infinity : 0, height),
+        padding: EdgeInsets.symmetric(horizontal: hPad),
+      ),
       WittButtonVariant.danger => ElevatedButton.styleFrom(
-          backgroundColor: WittColors.error,
-          foregroundColor: WittColors.textOnPrimary,
-          minimumSize: Size(isFullWidth ? double.infinity : 0, height),
-          padding: EdgeInsets.symmetric(horizontal: hPad),
+        backgroundColor: WittColors.error,
+        foregroundColor: WittColors.textOnPrimary,
+        minimumSize: Size(isFullWidth ? double.infinity : 0, height),
+        padding: EdgeInsets.symmetric(horizontal: hPad),
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: WittSpacing.borderRadiusMd,
         ),
+      ),
     };
 
     return switch (variant) {
       WittButtonVariant.outline => OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: style,
-          child: child,
-        ),
+        onPressed: isLoading ? null : onPressed,
+        style: style,
+        child: child,
+      ),
       WittButtonVariant.ghost => TextButton(
-          onPressed: isLoading ? null : onPressed,
-          style: style,
-          child: child,
-        ),
+        onPressed: isLoading ? null : onPressed,
+        style: style,
+        child: child,
+      ),
       _ => ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: style,
-          child: child,
-        ),
+        onPressed: isLoading ? null : onPressed,
+        style: style,
+        child: child,
+      ),
     };
   }
 
   Color _foregroundColor(ThemeData theme) => switch (variant) {
-        WittButtonVariant.primary => WittColors.textOnPrimary,
-        WittButtonVariant.secondary => WittColors.textOnSecondary,
-        WittButtonVariant.outline => WittColors.primary,
-        WittButtonVariant.ghost => WittColors.primary,
-        WittButtonVariant.danger => WittColors.textOnPrimary,
-      };
+    WittButtonVariant.primary => WittColors.textOnPrimary,
+    WittButtonVariant.secondary => WittColors.textOnSecondary,
+    WittButtonVariant.outline => WittColors.primary,
+    WittButtonVariant.ghost => WittColors.primary,
+    WittButtonVariant.danger => WittColors.textOnPrimary,
+  };
 }

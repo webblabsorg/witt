@@ -14,21 +14,29 @@ abstract final class WittTheme {
     final isDark = brightness == Brightness.dark;
 
     final colorScheme = isDark ? _darkColorScheme : _lightColorScheme;
-    final textTheme = isDark ? WittTypography.darkTextTheme : WittTypography.textTheme;
+    final textTheme = isDark
+        ? WittTypography.darkTextTheme
+        : WittTypography.textTheme;
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
       textTheme: textTheme,
-      scaffoldBackgroundColor: isDark ? WittColors.backgroundDark : WittColors.background,
+      scaffoldBackgroundColor: isDark
+          ? WittColors.backgroundDark
+          : WittColors.surface,
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: false,
         backgroundColor: isDark ? WittColors.surfaceDark : WittColors.surface,
-        foregroundColor: isDark ? WittColors.textPrimaryDark : WittColors.textPrimary,
-        systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        foregroundColor: isDark
+            ? WittColors.textPrimaryDark
+            : WittColors.textPrimary,
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
         titleTextStyle: textTheme.titleLarge,
         iconTheme: IconThemeData(
           color: isDark ? WittColors.textPrimaryDark : WittColors.textPrimary,
@@ -42,10 +50,15 @@ abstract final class WittTheme {
         indicatorColor: WittColors.primaryContainer,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: WittColors.primary, size: WittSpacing.iconLg);
+            return const IconThemeData(
+              color: WittColors.primary,
+              size: WittSpacing.iconLg,
+            );
           }
           return IconThemeData(
-            color: isDark ? WittColors.textSecondaryDark : WittColors.textSecondary,
+            color: isDark
+                ? WittColors.textSecondaryDark
+                : WittColors.textSecondary,
             size: WittSpacing.iconLg,
           );
         }),
@@ -57,16 +70,23 @@ abstract final class WittTheme {
             );
           }
           return textTheme.labelSmall?.copyWith(
-            color: isDark ? WittColors.textSecondaryDark : WittColors.textSecondary,
+            color: isDark
+                ? WittColors.textSecondaryDark
+                : WittColors.textSecondary,
           );
         }),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: isDark ? WittColors.surfaceDark : WittColors.surface,
         indicatorColor: WittColors.primaryContainer,
-        selectedIconTheme: const IconThemeData(color: WittColors.primary, size: WittSpacing.iconLg),
+        selectedIconTheme: const IconThemeData(
+          color: WittColors.primary,
+          size: WittSpacing.iconLg,
+        ),
         unselectedIconTheme: IconThemeData(
-          color: isDark ? WittColors.textSecondaryDark : WittColors.textSecondary,
+          color: isDark
+              ? WittColors.textSecondaryDark
+              : WittColors.textSecondary,
           size: WittSpacing.iconLg,
         ),
         selectedLabelTextStyle: textTheme.labelSmall?.copyWith(
@@ -74,7 +94,9 @@ abstract final class WittTheme {
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelTextStyle: textTheme.labelSmall?.copyWith(
-          color: isDark ? WittColors.textSecondaryDark : WittColors.textSecondary,
+          color: isDark
+              ? WittColors.textSecondaryDark
+              : WittColors.textSecondary,
         ),
         useIndicator: true,
         minWidth: 72,
@@ -82,18 +104,22 @@ abstract final class WittTheme {
       ),
       cardTheme: CardThemeData(
         elevation: WittSpacing.elevationXs,
-        shape: const RoundedRectangleBorder(borderRadius: WittSpacing.borderRadiusLg),
+        shape: const RoundedRectangleBorder(
+          borderRadius: WittSpacing.borderRadiusLg,
+        ),
         color: isDark ? WittColors.surfaceVariantDark : WittColors.surface,
         surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: WittColors.primary,
-          foregroundColor: WittColors.textOnPrimary,
+          backgroundColor: WittColors.primary, // deep black
+          foregroundColor: WittColors.textOnPrimary, // white
           elevation: 0,
           padding: WittSpacing.buttonPadding,
-          shape: const RoundedRectangleBorder(borderRadius: WittSpacing.borderRadiusMd),
+          shape: const RoundedRectangleBorder(
+            borderRadius: WittSpacing.borderRadiusMd,
+          ),
           textStyle: textTheme.labelLarge,
           minimumSize: const Size(0, WittSpacing.touchTarget),
         ),
@@ -103,7 +129,9 @@ abstract final class WittTheme {
           foregroundColor: WittColors.primary,
           side: const BorderSide(color: WittColors.primary, width: 1.5),
           padding: WittSpacing.buttonPadding,
-          shape: const RoundedRectangleBorder(borderRadius: WittSpacing.borderRadiusMd),
+          shape: const RoundedRectangleBorder(
+            borderRadius: WittSpacing.borderRadiusMd,
+          ),
           textStyle: textTheme.labelLarge,
           minimumSize: const Size(0, WittSpacing.touchTarget),
         ),
@@ -116,9 +144,24 @@ abstract final class WittTheme {
           minimumSize: const Size(0, WittSpacing.touchTarget),
         ),
       ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: WittColors.primary,
+          foregroundColor: WittColors.textOnPrimary,
+          elevation: 0,
+          padding: WittSpacing.buttonPadding,
+          shape: const RoundedRectangleBorder(
+            borderRadius: WittSpacing.borderRadiusMd,
+          ),
+          textStyle: textTheme.labelLarge,
+          minimumSize: const Size(0, WittSpacing.touchTarget),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? WittColors.surfaceVariantDark : WittColors.surfaceVariant,
+        fillColor: isDark
+            ? WittColors.surfaceVariantDark
+            : WittColors.surfaceVariant,
         border: OutlineInputBorder(
           borderRadius: WittSpacing.borderRadiusMd,
           borderSide: BorderSide(
@@ -148,12 +191,18 @@ abstract final class WittTheme {
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: isDark ? WittColors.surfaceVariantDark : WittColors.surfaceVariant,
+        backgroundColor: isDark
+            ? WittColors.surfaceVariantDark
+            : WittColors.surfaceVariant,
         selectedColor: WittColors.primaryContainer,
         labelStyle: textTheme.labelMedium,
         padding: WittSpacing.chipPadding,
-        shape: const RoundedRectangleBorder(borderRadius: WittSpacing.borderRadiusFull),
-        side: BorderSide(color: isDark ? WittColors.outlineDark : WittColors.outline),
+        shape: const RoundedRectangleBorder(
+          borderRadius: WittSpacing.borderRadiusFull,
+        ),
+        side: BorderSide(
+          color: isDark ? WittColors.outlineDark : WittColors.outline,
+        ),
       ),
       dividerTheme: DividerThemeData(
         color: isDark ? WittColors.outlineDark : WittColors.outline,
@@ -162,13 +211,19 @@ abstract final class WittTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(borderRadius: WittSpacing.borderRadiusMd),
-        backgroundColor: isDark ? WittColors.surfaceVariantDark : WittColors.textPrimary,
+        shape: const RoundedRectangleBorder(
+          borderRadius: WittSpacing.borderRadiusMd,
+        ),
+        backgroundColor: isDark
+            ? WittColors.surfaceVariantDark
+            : WittColors.textPrimary,
         contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(WittSpacing.radiusXxl)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(WittSpacing.radiusXxl),
+          ),
         ),
         showDragHandle: true,
       ),
@@ -182,7 +237,8 @@ abstract final class WittTheme {
           return isDark ? WittColors.textTertiaryDark : WittColors.textTertiary;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return WittColors.primaryContainer;
+          if (states.contains(WidgetState.selected))
+            return WittColors.primaryContainer;
           return isDark ? WittColors.outlineDark : WittColors.outline;
         }),
       ),
@@ -196,8 +252,8 @@ abstract final class WittTheme {
 
   static const ColorScheme _lightColorScheme = ColorScheme(
     brightness: Brightness.light,
-    primary: WittColors.primary,
-    onPrimary: WittColors.textOnPrimary,
+    primary: WittColors.primary, // deep black
+    onPrimary: WittColors.textOnPrimary, // white
     primaryContainer: WittColors.primaryContainer,
     onPrimaryContainer: WittColors.primaryDark,
     secondary: WittColors.secondary,
@@ -212,8 +268,8 @@ abstract final class WittTheme {
     onError: WittColors.textOnPrimary,
     errorContainer: WittColors.errorContainer,
     onErrorContainer: WittColors.error,
-    surface: WittColors.surface,
-    onSurface: WittColors.textPrimary,
+    surface: WittColors.surface, // deep white
+    onSurface: WittColors.textPrimary, // deep black
     surfaceContainerHighest: WittColors.surfaceVariant,
     onSurfaceVariant: WittColors.textSecondary,
     outline: WittColors.outline,
