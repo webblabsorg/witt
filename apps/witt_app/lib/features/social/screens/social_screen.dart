@@ -43,7 +43,13 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               const SnackBar(content: Text('Add Friend — coming soon')),
             ),
           ),
-          IconButton(icon: const Icon(Icons.search_rounded), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Search community',
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Community search — coming soon')),
+            ),
+          ),
         ],
         bottom: TabBar(
           controller: _tab,
@@ -71,26 +77,42 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
       floatingActionButton: ListenableBuilder(
         listenable: _tab,
         builder: (_, __) => switch (_tab.index) {
-          0 => FloatingActionButton.extended(
-            onPressed: () => _showCreatePost(context),
-            icon: const Icon(Icons.edit_rounded),
-            label: const Text('Post'),
-            backgroundColor: WittColors.primary,
-            foregroundColor: Colors.white,
+          0 => Semantics(
+            button: true,
+            label: 'Create post',
+            child: FloatingActionButton.extended(
+              onPressed: () => _showCreatePost(context),
+              icon: const Icon(Icons.edit_rounded),
+              label: const Text('Post'),
+              backgroundColor: WittColors.primary,
+              foregroundColor: Colors.white,
+            ),
           ),
-          1 => FloatingActionButton.extended(
-            onPressed: () {},
-            icon: const Icon(Icons.group_add_rounded),
-            label: const Text('New Group'),
-            backgroundColor: WittColors.secondary,
-            foregroundColor: Colors.white,
+          1 => Semantics(
+            button: true,
+            label: 'Create new group',
+            child: FloatingActionButton.extended(
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Create group — coming soon')),
+              ),
+              icon: const Icon(Icons.group_add_rounded),
+              label: const Text('New Group'),
+              backgroundColor: WittColors.secondary,
+              foregroundColor: Colors.white,
+            ),
           ),
-          2 => FloatingActionButton.extended(
-            onPressed: () {},
-            icon: const Icon(Icons.help_outline_rounded),
-            label: const Text('Ask'),
-            backgroundColor: WittColors.accent,
-            foregroundColor: Colors.white,
+          2 => Semantics(
+            button: true,
+            label: 'Ask a question',
+            child: FloatingActionButton.extended(
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ask question — coming soon')),
+              ),
+              icon: const Icon(Icons.help_outline_rounded),
+              label: const Text('Ask'),
+              backgroundColor: WittColors.accent,
+              foregroundColor: Colors.white,
+            ),
           ),
           _ => const SizedBox.shrink(),
         },

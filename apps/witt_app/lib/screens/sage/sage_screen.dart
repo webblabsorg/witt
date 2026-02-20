@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 import '../../features/sage/models/sage_models.dart';
 import '../../features/sage/providers/sage_providers.dart';
@@ -175,7 +176,7 @@ class _SageScreenState extends ConsumerState<SageScreen> {
               color: WittColors.warning,
               icon: Icons.lock_outline,
               action: TextButton(
-                onPressed: () {},
+                onPressed: () => context.push('/onboarding/paywall'),
                 child: const Text('Upgrade'),
               ),
             ),
@@ -247,47 +248,55 @@ class _ModeSelector extends StatelessWidget {
           final isPaidOnly = mode != SageMode.chat && mode != SageMode.explain;
           final locked = isPaidOnly && !isPaid;
 
-          return GestureDetector(
-            onTap: locked ? null : () => onSelect(mode),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? WittColors.primary
-                    : WittColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected ? WittColors.primary : WittColors.outline,
+          return Semantics(
+            button: !locked,
+            label: locked ? '$label (Premium only)' : '$label mode',
+            selected: isSelected,
+            child: GestureDetector(
+              onTap: locked ? null : () => onSelect(mode),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    locked ? Icons.lock_outline : icon,
-                    size: 14,
-                    color: isSelected
-                        ? Colors.white
-                        : locked
-                        ? WittColors.textTertiary
-                        : WittColors.textSecondary,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? WittColors.primary
+                      : WittColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? WittColors.primary : WittColors.outline,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    label,
-                    style: theme.textTheme.labelSmall?.copyWith(
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      locked ? Icons.lock_outline : icon,
+                      size: 14,
                       color: isSelected
                           ? Colors.white
                           : locked
                           ? WittColors.textTertiary
                           : WittColors.textSecondary,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.normal,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Text(
+                      label,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: isSelected
+                            ? Colors.white
+                            : locked
+                            ? WittColors.textTertiary
+                            : WittColors.textSecondary,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -308,78 +317,84 @@ class _MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final isUser = message.role == 'user';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isUser) ...[
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [WittColors.primary, WittColors.accent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.auto_awesome,
-                color: Colors.white,
-                size: 14,
-              ),
-            ),
-            const SizedBox(width: WittSpacing.sm),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: WittSpacing.md,
-                vertical: WittSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: isUser ? WittColors.primary : WittColors.surfaceVariant,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isUser ? 16 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 16),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.content.isEmpty && message.isStreaming
-                        ? '…'
-                        : message.content,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isUser ? Colors.white : null,
-                    ),
+    final role = isUser ? 'You' : 'Sage';
+    return Semantics(
+      label: '$role: ${message.content}',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: isUser
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isUser) ...[
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [WittColors.primary, WittColors.accent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  if (message.isStreaming && message.content.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: SizedBox(
-                        width: 16,
-                        height: 8,
-                        child: LinearProgressIndicator(
-                          backgroundColor: WittColors.outline,
-                          color: WittColors.primary,
-                        ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: WittSpacing.sm),
+            ],
+            Flexible(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: WittSpacing.md,
+                  vertical: WittSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: isUser
+                      ? WittColors.primary
+                      : WittColors.surfaceVariant,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isUser ? 16 : 4),
+                    bottomRight: Radius.circular(isUser ? 4 : 16),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message.content.isEmpty && message.isStreaming
+                          ? '…'
+                          : message.content,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: isUser ? Colors.white : null,
                       ),
                     ),
-                ],
+                    if (message.isStreaming && message.content.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: SizedBox(
+                          width: 16,
+                          height: 8,
+                          child: LinearProgressIndicator(
+                            backgroundColor: WittColors.outline,
+                            color: WittColors.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (isUser) const SizedBox(width: 36),
-        ],
+            if (isUser) const SizedBox(width: 36),
+          ],
+        ),
       ),
     );
   }

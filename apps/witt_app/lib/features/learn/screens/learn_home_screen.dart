@@ -16,30 +16,11 @@ import '../../homework/screens/homework_screen.dart';
 import '../../planner/screens/planner_screen.dart';
 import '../../offline/screens/offline_screen.dart';
 
-class LearnHomeScreen extends ConsumerStatefulWidget {
-  const LearnHomeScreen({super.key, this.initialExamId});
-
-  /// When set (e.g. from a deep link), the screen navigates directly to the
-  /// exam hub for this exam ID after the first frame.
-  final String? initialExamId;
+class LearnHomeScreen extends ConsumerWidget {
+  const LearnHomeScreen({super.key});
 
   @override
-  ConsumerState<LearnHomeScreen> createState() => _LearnHomeScreenState();
-}
-
-class _LearnHomeScreenState extends ConsumerState<LearnHomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialExamId != null && widget.initialExamId!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.push('/learn/exam/${widget.initialExamId}');
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final myExams = ref.watch(userExamListProvider);
     final featured = ref.watch(featuredExamsProvider);
     final theme = Theme.of(context);
@@ -53,7 +34,11 @@ class _LearnHomeScreenState extends ConsumerState<LearnHomeScreen> {
             snap: true,
             title: const Text('Learn'),
             actions: [
-              IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+              IconButton(
+                icon: const Icon(Icons.search),
+                tooltip: 'Search exams',
+                onPressed: () => _openExamBrowser(context),
+              ),
             ],
           ),
 
@@ -359,9 +344,7 @@ class _LearnHomeScreenState extends ConsumerState<LearnHomeScreen> {
   }
 
   void _openExamHub(BuildContext context, String examId) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => ExamHubScreen(examId: examId)));
+    context.push('/learn/exam/$examId');
   }
 
   void _openExamBrowser(BuildContext context, {ExamRegion? region}) {

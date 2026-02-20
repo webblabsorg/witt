@@ -19,6 +19,7 @@ import '../features/home/screens/search_screen.dart';
 import '../features/home/screens/notifications_screen.dart';
 import '../features/games/screens/play_hub_screen.dart';
 import '../features/learn/screens/learn_home_screen.dart';
+import '../features/learn/screens/exam_hub_screen.dart';
 import '../features/planner/screens/planner_screen.dart';
 import '../features/offline/screens/offline_screen.dart';
 import '../screens/sage/sage_screen.dart';
@@ -74,9 +75,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/home';
       }
 
-      // Auth guard: deep links to protected routes while not authenticated
-      // send to auth screen, preserving destination.
-      if (!isAuthenticated && _requiresAuth(location)) {
+      // Auth guard tier 1: completely unauthenticated (no session at all)
+      // → redirect to auth, preserving destination.
+      if (auth.status == AuthStatus.unauthenticated &&
+          _requiresAuth(location)) {
+        final dest = Uri.encodeComponent(state.uri.toString());
+        return '/onboarding/auth?from=$dest';
+      }
+
+      // Auth guard tier 2: anonymous session cannot access account-only routes.
+      if (auth.isAnonymous && _requiresFullAuth(location)) {
         final dest = Uri.encodeComponent(state.uri.toString());
         return '/onboarding/auth?from=$dest';
       }
@@ -189,7 +197,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'exam/:examId',
                     builder: (_, state) {
                       final examId = state.pathParameters['examId'] ?? '';
-                      return LearnHomeScreen(initialExamId: examId);
+                      return ExamHubScreen(examId: examId);
                     },
                   ),
                 ],
@@ -248,8 +256,15 @@ String _initialLocation(OnboardingData onboarding, AuthState auth) {
   return '/home';
 }
 
-/// Routes that require an authenticated (non-anonymous) session.
+/// Routes that require at least an anonymous session (no bare unauthenticated).
 bool _requiresAuth(String location) {
   const protected = ['/profile', '/sage', '/social', '/learn/exam'];
   return protected.any((p) => location.startsWith(p));
+}
+
+/// Routes that require a full (non-anonymous) account.
+/// Anonymous users are prompted to sign up when hitting these.
+bool _requiresFullAuth(String location) {
+  const fullAuthOnly = ['/profile', '/sage'];
+  return fullAuthOnly.any((p) => location.startsWith(p));
 }

@@ -16,6 +16,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
   String? _error;
 
+  /// Returns the post-auth destination: honours ?from= if present, otherwise
+  /// falls through to the paywall so new users see the subscription offer.
+  String _postAuthDestination() {
+    final from = GoRouterState.of(context).uri.queryParameters['from'];
+    if (from != null && from.isNotEmpty) {
+      return Uri.decodeComponent(from);
+    }
+    return '/onboarding/paywall';
+  }
+
   Future<void> _handleResult(Future<void> Function() action) async {
     setState(() {
       _isLoading = true;
@@ -23,7 +33,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     });
     try {
       await action();
-      if (mounted) context.go('/onboarding/paywall');
+      if (mounted) context.go(_postAuthDestination());
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
