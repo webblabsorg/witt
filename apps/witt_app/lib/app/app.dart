@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:witt_monetization/witt_monetization.dart';
@@ -49,7 +51,7 @@ class _WittAppState extends ConsumerState<WittApp> {
     final themeMode = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
 
-    return MaterialApp.router(
+    final app = MaterialApp.router(
       title: 'Witt',
       debugShowCheckedModeBanner: false,
       theme: WittTheme.light,
@@ -58,5 +60,94 @@ class _WittAppState extends ConsumerState<WittApp> {
       locale: locale,
       routerConfig: router,
     );
+
+    // macOS: wrap with native menu bar
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      return PlatformMenuBar(
+        menus: [
+          PlatformMenu(
+            label: 'Witt',
+            menus: [
+              PlatformMenuItemGroup(
+                members: [
+                  PlatformMenuItem(label: 'About Witt', onSelected: () {}),
+                ],
+              ),
+              PlatformMenuItemGroup(
+                members: [
+                  PlatformMenuItem(
+                    label: 'Preferences…',
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.comma,
+                      meta: true,
+                    ),
+                    onSelected: () {},
+                  ),
+                ],
+              ),
+              PlatformMenuItemGroup(
+                members: [
+                  const PlatformProvidedMenuItem(
+                    type: PlatformProvidedMenuItemType.quit,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          PlatformMenu(
+            label: 'View',
+            menus: [
+              PlatformMenuItemGroup(
+                members: [
+                  PlatformMenuItem(
+                    label: 'Home',
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.digit1,
+                      meta: true,
+                    ),
+                    onSelected: () => router.go('/home'),
+                  ),
+                  PlatformMenuItem(
+                    label: 'Learn',
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.digit2,
+                      meta: true,
+                    ),
+                    onSelected: () => router.go('/learn'),
+                  ),
+                  PlatformMenuItem(
+                    label: 'Sage AI',
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.digit3,
+                      meta: true,
+                    ),
+                    onSelected: () => router.go('/sage'),
+                  ),
+                  PlatformMenuItem(
+                    label: 'Social',
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.digit4,
+                      meta: true,
+                    ),
+                    onSelected: () => router.go('/social'),
+                  ),
+                  PlatformMenuItem(
+                    label: 'Profile',
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.digit5,
+                      meta: true,
+                    ),
+                    onSelected: () => router.go('/profile'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+        child: app,
+      );
+    }
+
+    return app;
   }
 }

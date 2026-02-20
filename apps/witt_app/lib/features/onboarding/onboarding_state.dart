@@ -15,6 +15,7 @@ const _keyStudyTime = 'study_time';
 const _keySubjects = 'subjects';
 const _keyLearningPrefs = 'learning_prefs';
 const _keyNotificationsEnabled = 'notifications_enabled';
+const _keyBirthYear = 'birth_year';
 
 class OnboardingData {
   const OnboardingData({
@@ -31,6 +32,7 @@ class OnboardingData {
     this.subjects = const [],
     this.learningPrefs = const [],
     this.notificationsEnabled = false,
+    this.birthYear,
   });
 
   final bool isCompleted;
@@ -46,6 +48,7 @@ class OnboardingData {
   final List<String> subjects;
   final List<String> learningPrefs;
   final bool notificationsEnabled;
+  final int? birthYear;
 
   OnboardingData copyWith({
     bool? isCompleted,
@@ -61,6 +64,7 @@ class OnboardingData {
     List<String>? subjects,
     List<String>? learningPrefs,
     bool? notificationsEnabled,
+    int? birthYear,
   }) {
     return OnboardingData(
       isCompleted: isCompleted ?? this.isCompleted,
@@ -76,6 +80,7 @@ class OnboardingData {
       subjects: subjects ?? this.subjects,
       learningPrefs: learningPrefs ?? this.learningPrefs,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      birthYear: birthYear ?? this.birthYear,
     );
   }
 }
@@ -115,6 +120,7 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       ),
       notificationsEnabled:
           _box.get(_keyNotificationsEnabled, defaultValue: false) as bool,
+      birthYear: _box.get(_keyBirthYear) as int?,
     );
   }
 
@@ -132,6 +138,7 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     await _box.put(_keySubjects, data.subjects);
     await _box.put(_keyLearningPrefs, data.learningPrefs);
     await _box.put(_keyNotificationsEnabled, data.notificationsEnabled);
+    if (data.birthYear != null) await _box.put(_keyBirthYear, data.birthYear);
     state = data;
   }
 
@@ -177,6 +184,10 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
 
   Future<void> setNotifications(bool enabled) async {
     await _save(state.copyWith(notificationsEnabled: enabled, currentStep: 11));
+  }
+
+  Future<void> setBirthYear(int year) async {
+    await _save(state.copyWith(birthYear: year));
   }
 
   Future<void> setStep(int step) async {

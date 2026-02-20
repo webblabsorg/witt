@@ -10,6 +10,7 @@ import '../../features/auth/auth_state.dart';
 import '../../features/onboarding/onboarding_state.dart';
 import '../../core/providers/theme_provider.dart';
 import '../../core/providers/locale_provider.dart';
+import '../../core/security/privacy_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -383,6 +384,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   if (auth.user != null) ...[
                     const SizedBox(height: WittSpacing.sm),
                     _ActionTile(
+                      icon: Icons.download_outlined,
+                      iconColor: WittColors.textSecondary,
+                      title: 'Export My Data',
+                      subtitle: 'Download a copy of your personal data (GDPR)',
+                      onTap: () => _exportData(context),
+                    ),
+                    _ActionTile(
+                      icon: Icons.delete_forever_rounded,
+                      iconColor: WittColors.error,
+                      title: 'Delete Account',
+                      subtitle: 'Permanently delete your account and all data',
+                      onTap: () => _confirmDeleteAccount(context, ref),
+                    ),
+                    const SizedBox(height: WittSpacing.sm),
+                    _ActionTile(
                       icon: Icons.logout_rounded,
                       iconColor: WittColors.error,
                       title: 'Sign Out',
@@ -596,6 +612,72 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _exportData(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final json = await PrivacyService.exportMyData();
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Your Data Export'),
+          content: SingleChildScrollView(
+            child: SelectableText(
+              json,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
+  }
+
+  void _confirmDeleteAccount(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'This will permanently delete your account and all associated data. '
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await PrivacyService.deleteAccount();
+                ref.read(authNotifierProvider.notifier).signOut();
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Deletion failed: $e')),
+                  );
+                }
+              }
+            },
+            child: Text(
+              'Delete Account',
+              style: TextStyle(color: WittColors.error),
+            ),
+          ),
+        ],
       ),
     );
   }

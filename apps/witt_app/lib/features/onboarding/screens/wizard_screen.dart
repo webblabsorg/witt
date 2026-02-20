@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../onboarding_state.dart';
+import '../../../core/security/privacy_service.dart';
 
 class WizardScreen extends ConsumerStatefulWidget {
   const WizardScreen({super.key, required this.step});
@@ -237,6 +238,32 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     );
   }
 
+  Future<void> _handleEducationLevel(String level) async {
+    setState(() => _selectedLevel = level);
+    // COPPA: Middle School implies potential under-13 — require parental consent
+    if (level == 'Middle School') {
+      final consented = await _showCoppaGate();
+      if (!consented) {
+        setState(() => _selectedLevel = null);
+        return;
+      }
+    }
+    await ref.read(onboardingProvider.notifier).setEducationLevel(level);
+    if (mounted) _next();
+  }
+
+  Future<bool> _showCoppaGate() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _CoppaConsentDialog(),
+    );
+    if (result == true) {
+      await PrivacyService.recordParentalConsent();
+    }
+    return result ?? false;
+  }
+
   // Q2: Education level
   Widget _buildQ2(ThemeData theme, bool isDark) {
     return _StepWrapper(
@@ -247,13 +274,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           return Padding(
             padding: const EdgeInsets.only(bottom: WittSpacing.sm),
             child: GestureDetector(
-              onTap: () async {
-                setState(() => _selectedLevel = level);
-                await ref
-                    .read(onboardingProvider.notifier)
-                    .setEducationLevel(level);
-                if (mounted) _next();
-              },
+              onTap: () => _handleEducationLevel(level),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: WittSpacing.lg,
@@ -855,6 +876,36 @@ class _StudyOption {
   final int minutes;
   final String label;
   final String sublabel;
+}
+
+// ── COPPA parental consent dialog ─────────────────────────────────────────
+
+class _CoppaConsentDialog extends StatelessWidget {
+  const _CoppaConsentDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Parental Consent Required'),
+      content: const Text(
+        'Witt collects personal data to personalise your learning experience. '
+        'Because you may be under 13, we need a parent or guardian to confirm '
+        'they consent to your use of this app and the collection of your data '
+        'in accordance with COPPA (Children\'s Online Privacy Protection Act).\n\n'
+        'A parent or guardian must tap "I Consent" below to continue.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('I Consent (Parent/Guardian)'),
+        ),
+      ],
+    );
+  }
 }
 
 class _NotifRow extends StatelessWidget {

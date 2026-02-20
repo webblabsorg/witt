@@ -43,6 +43,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: _initialLocation(onboarding, auth),
+    // Deep link schemes: witt:// and https://witt.app
+    // GoRouter handles these automatically via the OS intent/URL handler.
+    // Routes below map 1:1 to the spec §4.4 deep-link conformance table.
     redirect: (context, state) {
       final location = state.matchedLocation;
       final onboardingDone = onboarding.isCompleted;
