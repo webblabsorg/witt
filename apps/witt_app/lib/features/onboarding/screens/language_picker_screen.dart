@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
+import '../../../core/providers/locale_provider.dart';
 import '../onboarding_state.dart';
 
 class LanguagePickerScreen extends ConsumerStatefulWidget {
@@ -15,6 +16,14 @@ class LanguagePickerScreen extends ConsumerStatefulWidget {
 
 class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
   String _selected = 'en';
+
+  String _toLocaleCode(String code) => code.split('-').first;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = ref.read(onboardingProvider).language;
+  }
 
   static const _languages = [
     _Language('en', '🇺🇸', 'English (US)', 'English'),
@@ -60,8 +69,10 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Choose your language',
-                      style: theme.textTheme.headlineSmall),
+                  Text(
+                    'Choose your language',
+                    style: theme.textTheme.headlineSmall,
+                  ),
                   const SizedBox(height: WittSpacing.sm),
                   Text(
                     'You can change this later in Settings.',
@@ -84,7 +95,12 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
                   final lang = _languages[i];
                   final isSelected = _selected == lang.code;
                   return GestureDetector(
-                    onTap: () => setState(() => _selected = lang.code),
+                    onTap: () async {
+                      setState(() => _selected = lang.code);
+                      await ref
+                          .read(localeProvider.notifier)
+                          .setLocale(_toLocaleCode(lang.code));
+                    },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(
@@ -95,8 +111,8 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
                         color: isSelected
                             ? WittColors.primaryContainer
                             : (isDark
-                                ? WittColors.surfaceVariantDark
-                                : WittColors.surfaceVariant),
+                                  ? WittColors.surfaceVariantDark
+                                  : WittColors.surfaceVariant),
                         borderRadius: WittSpacing.borderRadiusMd,
                         border: Border.all(
                           color: isSelected
@@ -107,8 +123,7 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
                       ),
                       child: Row(
                         children: [
-                          Text(lang.flag,
-                              style: const TextStyle(fontSize: 24)),
+                          Text(lang.flag, style: const TextStyle(fontSize: 24)),
                           const SizedBox(width: WittSpacing.md),
                           Expanded(
                             child: Column(
@@ -130,8 +145,11 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
                             ),
                           ),
                           if (isSelected)
-                            const Icon(Icons.check_circle_rounded,
-                                color: WittColors.primary, size: 20),
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: WittColors.primary,
+                              size: 20,
+                            ),
                         ],
                       ),
                     ),
@@ -149,6 +167,9 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
               child: WittButton(
                 label: 'Continue',
                 onPressed: () async {
+                  await ref
+                      .read(localeProvider.notifier)
+                      .setLocale(_toLocaleCode(_selected));
                   await ref
                       .read(onboardingProvider.notifier)
                       .setLanguage(_selected);

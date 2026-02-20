@@ -42,6 +42,4 @@ Configure in Supabase Dashboard → Authentication → Providers:
 Open Exchange Rates API: a4e862bb2cc34d35a308b7c5666c20fe
 
 SUBRAIL_API_KEY=your-subrail-api-key
-LIBRETRANSLATE_URL=https://libretranslate.com
-LIBRETRANSLATE_API_KEY=your-libretranslate-api-key
 OPEN_EXCHANGE_RATES_API_KEY=your-oxr-api-key

@@ -251,25 +251,9 @@ class _SplashScreenState extends State<SplashScreen>
                     position: _ctaSlide,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Column(
-                        children: [
-                          _GlowButton(
-                            label: 'Get Started — It\'s Free',
-                            onTap: () => context.go('/onboarding/carousel'),
-                          ),
-                          const SizedBox(height: 14),
-                          GestureDetector(
-                            onTap: () => context.go('/onboarding/carousel'),
-                            child: Text(
-                              'Already have an account? Sign in →',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.45),
-                                fontSize: 13,
-                                letterSpacing: 0.1,
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: _GlowButton(
+                        label: 'Get Started — It\'s Free',
+                        onTap: () => context.go('/onboarding/carousel'),
                       ),
                     ),
                   ),

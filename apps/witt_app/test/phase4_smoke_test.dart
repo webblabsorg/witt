@@ -39,6 +39,7 @@ Future<void> _initHive() async {
   _hiveDir = await Directory.systemTemp.createTemp('hive_test_');
   Hive.init(_hiveDir.path);
   await openPersistenceBoxes();
+  await Hive.openBox<dynamic>('app_prefs');
 }
 
 Future<void> _tearDownHive() async {
@@ -198,9 +199,9 @@ void main() {
   // ── Translation: language selection ──────────────────────────────────────
 
   group('Translation — language selection', () {
-    test('supported languages list has 14 entries', () {
+    test('supported languages list has 19 entries', () {
       final c = _container();
-      expect(c.read(supportedLanguagesProvider).length, 14);
+      expect(c.read(supportedLanguagesProvider).length, 19);
     });
 
     test('setSourceLang updates state', () {

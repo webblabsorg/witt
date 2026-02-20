@@ -55,6 +55,9 @@ dependencies:
   # Environment config
   flutter_dotenv: ^5.2.1
 
+  # On-device translation (ML Kit)
+  google_mlkit_translation: ^0.11.0
+
   # Onboarding
   flutter_native_splash: ^2.4.3
   smooth_page_indicator: ^1.2.0+3

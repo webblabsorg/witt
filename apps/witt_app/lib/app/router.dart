@@ -39,8 +39,8 @@ final _socialNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'social');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final onboarding = ref.watch(onboardingProvider);
-  final auth = ref.watch(authNotifierProvider);
+  final onboarding = ref.read(onboardingProvider);
+  final auth = ref.read(authNotifierProvider);
 
   // Handle cold-start deep link (app opened via witt:// or https://witt.app)
   final coldLink = Bootstrap.consumePendingLink();
@@ -58,8 +58,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) => computeRedirect(
       location: state.matchedLocation,
       fullUri: state.uri.toString(),
-      onboarding: onboarding,
-      auth: auth,
+      onboarding: ref.read(onboardingProvider),
+      auth: ref.read(authNotifierProvider),
       queryParameters: state.uri.queryParameters,
     ),
     routes: [

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/translation_models.dart';
 import '../../../core/persistence/hive_boxes.dart';
 import '../../../core/analytics/analytics.dart';
-import '../../../core/translation/libre_translate_client.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../core/translation/ml_kit_translate_client.dart';
 
 // ── Supported languages ───────────────────────────────────────────────────
 
@@ -57,6 +60,41 @@ const supportedLanguages = [
     isOfflineAvailable: false,
   ),
   SupportedLanguage(
+    code: 'it',
+    name: 'Italian',
+    nativeName: 'Italiano',
+    flag: '🇮🇹',
+    isOfflineAvailable: false,
+  ),
+  SupportedLanguage(
+    code: 'nl',
+    name: 'Dutch',
+    nativeName: 'Nederlands',
+    flag: '🇳🇱',
+    isOfflineAvailable: false,
+  ),
+  SupportedLanguage(
+    code: 'ru',
+    name: 'Russian',
+    nativeName: 'Русский',
+    flag: '🇷🇺',
+    isOfflineAvailable: false,
+  ),
+  SupportedLanguage(
+    code: 'pl',
+    name: 'Polish',
+    nativeName: 'Polski',
+    flag: '🇵🇱',
+    isOfflineAvailable: false,
+  ),
+  SupportedLanguage(
+    code: 'tr',
+    name: 'Turkish',
+    nativeName: 'Türkçe',
+    flag: '🇹🇷',
+    isOfflineAvailable: false,
+  ),
+  SupportedLanguage(
     code: 'sw',
     name: 'Swahili',
     nativeName: 'Kiswahili',
@@ -64,24 +102,24 @@ const supportedLanguages = [
     isOfflineAvailable: false,
   ),
   SupportedLanguage(
-    code: 'yo',
-    name: 'Yoruba',
-    nativeName: 'Yorùbá',
-    flag: '🇳🇬',
+    code: 'bn',
+    name: 'Bengali',
+    nativeName: 'বাংলা',
+    flag: '🇧🇩',
     isOfflineAvailable: false,
   ),
   SupportedLanguage(
-    code: 'ha',
-    name: 'Hausa',
-    nativeName: 'Hausa',
-    flag: '🇳🇬',
+    code: 'id',
+    name: 'Indonesian',
+    nativeName: 'Bahasa Indonesia',
+    flag: '🇮🇩',
     isOfflineAvailable: false,
   ),
   SupportedLanguage(
-    code: 'ig',
-    name: 'Igbo',
-    nativeName: 'Igbo',
-    flag: '🇳🇬',
+    code: 'vi',
+    name: 'Vietnamese',
+    nativeName: 'Tiếng Việt',
+    flag: '🇻🇳',
     isOfflineAvailable: false,
   ),
   SupportedLanguage(
@@ -114,12 +152,26 @@ final supportedLanguagesProvider = Provider<List<SupportedLanguage>>(
 // ── Translation notifier ──────────────────────────────────────────────────
 
 class TranslationNotifier extends Notifier<TranslationState> {
+  int _requestId = 0;
+  Timer? _inputDebounce;
+
+  bool _isSupported(String code) =>
+      supportedLanguages.any((lang) => lang.code == code);
+
   @override
   TranslationState build() {
+    ref.onDispose(() {
+      _inputDebounce?.cancel();
+    });
+
+    final preferredLocale = ref.watch(localeProvider).languageCode;
+    final preferredTarget = _isSupported(preferredLocale)
+        ? preferredLocale
+        : 'en';
+
     final srcLang =
         translationBox.get(kKeyLastSourceLang, defaultValue: 'en') as String;
-    final tgtLang =
-        translationBox.get(kKeyLastTargetLang, defaultValue: 'fr') as String;
+    final tgtLang = preferredTarget;
     final rawHistory =
         translationBox.get(kKeyTranslationHistory, defaultValue: <dynamic>[])
             as List;
@@ -144,11 +196,17 @@ class TranslationNotifier extends Notifier<TranslationState> {
   void setSourceLang(String code) {
     state = state.copyWith(sourceLang: code, result: null);
     translationBox.put(kKeyLastSourceLang, code);
+    if (state.inputText.trim().isNotEmpty) {
+      unawaited(translate());
+    }
   }
 
   void setTargetLang(String code) {
     state = state.copyWith(targetLang: code, result: null);
     translationBox.put(kKeyLastTargetLang, code);
+    if (state.inputText.trim().isNotEmpty) {
+      unawaited(translate());
+    }
   }
 
   void swapLanguages() {
@@ -163,9 +221,16 @@ class TranslationNotifier extends Notifier<TranslationState> {
 
   void setInput(String text) {
     state = state.copyWith(inputText: text, result: null);
+    _inputDebounce?.cancel();
+    if (text.trim().isEmpty) return;
+    _inputDebounce = Timer(const Duration(milliseconds: 350), () {
+      unawaited(translate());
+    });
   }
 
   Future<void> translate() async {
+    final requestId = ++_requestId;
+
     final text = state.inputText.trim();
     if (text.isEmpty) return;
 
@@ -174,7 +239,7 @@ class TranslationNotifier extends Notifier<TranslationState> {
     state = state.copyWith(status: TranslationStatus.loading, error: null);
 
     try {
-      final translated = await LibreTranslateClient.instance.translate(
+      final translated = await MlKitTranslateClient.instance.translate(
         text: text,
         sourceLang: srcLang,
         targetLang: tgtLang,
@@ -186,16 +251,21 @@ class TranslationNotifier extends Notifier<TranslationState> {
         sourceLang: srcLang,
         targetLang: tgtLang,
         timestamp: DateTime.now(),
-        isOffline: false,
+        isOffline: true,
       );
 
       final newHistory = [result, ...state.history.take(19)];
+
+      if (requestId != _requestId) {
+        return;
+      }
+
       state = state.copyWith(
         status: TranslationStatus.success,
         result: result,
         history: newHistory,
       );
-      Analytics.translate(srcLang, tgtLang, false);
+      Analytics.translate(srcLang, tgtLang, true);
       translationBox.put(
         kKeyTranslationHistory,
         newHistory
@@ -211,12 +281,18 @@ class TranslationNotifier extends Notifier<TranslationState> {
             )
             .toList(),
       );
-    } on LibreTranslateException catch (e) {
+    } on MlKitTranslateException catch (e) {
+      if (requestId != _requestId) {
+        return;
+      }
       state = state.copyWith(
         status: TranslationStatus.error,
         error: 'Translation failed: ${e.message}',
       );
     } catch (_) {
+      if (requestId != _requestId) {
+        return;
+      }
       state = state.copyWith(
         status: TranslationStatus.error,
         error: 'Translation failed. Check your connection.',
