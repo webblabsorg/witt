@@ -29,5 +29,5 @@ void main() {
       ],
       child: const WittApp(),
     ),
-  ).then((_) => FlutterNativeSplash.remove());
+  );
 }

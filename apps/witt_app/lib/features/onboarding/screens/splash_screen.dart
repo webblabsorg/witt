@@ -52,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen>
             padding: const EdgeInsets.symmetric(horizontal: 48),
             child: Image.asset(
               'assets/images/logo-white.png',
-              width: MediaQuery.of(context).size.width * 0.65,
+              width: MediaQuery.of(context).size.width * 0.78,
               fit: BoxFit.contain,
             ),
           ),

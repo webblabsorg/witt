@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mixpanel_flutter/mixpanel_flutter.dart';
@@ -93,6 +94,11 @@ class Bootstrap {
       OneSignal.initialize(oneSignalAppId);
       await OneSignal.Notifications.requestPermission(true);
     }
+
+    // Dismiss the native OS splash — all services are ready, Flutter UI is about
+    // to start. Must happen BEFORE SentryFlutter.init because that calls runApp()
+    // and the Future never completes after that point.
+    FlutterNativeSplash.remove();
 
     // Initialize Sentry last — wraps runApp so all Flutter errors are captured.
     final sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';

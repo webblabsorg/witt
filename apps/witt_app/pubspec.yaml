@@ -101,16 +101,19 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#000000"
-  image: assets/images/logo-white.png
-  image_dark: assets/images/logo-white.png
+  image: assets/images/logo-white-splash.png
+  image_dark: assets/images/logo-white-splash.png
   color_dark: "#000000"
   android: true
   ios: true
   web: false
+  fullscreen: true
+  android_gravity: center
+  ios_content_mode: center
   android_12:
-    image: assets/images/logo-white.png
+    image: assets/images/logo-white-splash.png
     icon_background_color: "#000000"
-    image_dark: assets/images/logo-white.png
+    image_dark: assets/images/logo-white-splash.png
     icon_background_color_dark: "#000000"
 
 flutter:
