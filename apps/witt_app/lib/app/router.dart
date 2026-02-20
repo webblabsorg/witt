@@ -18,7 +18,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/home/screens/search_screen.dart';
 import '../features/home/screens/notifications_screen.dart';
 import '../features/home/screens/play_hub_screen.dart';
-import '../screens/learn/learn_screen.dart';
+import '../features/learn/screens/learn_home_screen.dart';
 import '../screens/sage/sage_screen.dart';
 import '../screens/social/social_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -133,7 +133,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             navigatorKey: _learnNavigatorKey,
             routes: [
-              GoRoute(path: '/learn', builder: (_, __) => const LearnScreen()),
+              GoRoute(
+                path: '/learn',
+                builder: (_, __) => const LearnHomeScreen(),
+              ),
             ],
           ),
           // Tab 3: Sage
