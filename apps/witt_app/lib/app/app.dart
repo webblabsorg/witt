@@ -5,6 +5,8 @@ import 'package:witt_monetization/witt_monetization.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import 'router.dart';
+import '../core/providers/theme_provider.dart';
+import '../core/providers/locale_provider.dart';
 
 class WittApp extends ConsumerStatefulWidget {
   const WittApp({super.key});
@@ -44,13 +46,16 @@ class _WittAppState extends ConsumerState<WittApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       title: 'Witt',
       debugShowCheckedModeBanner: false,
       theme: WittTheme.light,
       darkTheme: WittTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
+      locale: locale,
       routerConfig: router,
     );
   }

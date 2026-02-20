@@ -34,6 +34,7 @@ class Bootstrap {
     await Hive.initFlutter();
     await openOnboardingBox();
     await openPersistenceBoxes();
+    await Hive.openBox<dynamic>('app_prefs');
 
     // Initialize currency service (GeoIP + OXR rates, non-blocking)
     unawaited(CurrencyService.instance.init());

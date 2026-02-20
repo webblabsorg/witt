@@ -460,109 +460,163 @@ class _QuestionCard extends ConsumerWidget {
   final ForumQuestion q;
   final bool isDark;
 
+  void _showReportMenu(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(WittSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Report Question',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: WittSpacing.md),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: WittColors.error),
+              title: const Text('Inappropriate content'),
+              onTap: () {
+                ref.read(forumProvider.notifier).reportQuestion(q.id);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Question reported. Thank you.'),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.block_rounded),
+              title: const Text('Spam or misleading'),
+              onTap: () {
+                ref.read(forumProvider.notifier).reportQuestion(q.id);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Question reported. Thank you.'),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: WittSpacing.sm),
-      child: WittCard(
-        padding: const EdgeInsets.all(WittSpacing.md),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              children: [
-                GestureDetector(
-                  onTap: () =>
-                      ref.read(forumProvider.notifier).toggleUpvote(q.id),
-                  child: Icon(
-                    q.isUpvoted
-                        ? Icons.arrow_upward_rounded
-                        : Icons.arrow_upward_outlined,
-                    color: q.isUpvoted ? WittColors.primary : null,
-                    size: 20,
-                  ),
-                ),
-                Text(
-                  '${q.votes}',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: q.isUpvoted ? WittColors.primary : null,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: WittSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: GestureDetector(
+        onLongPress: () => _showReportMenu(context, ref),
+        child: WittCard(
+          padding: const EdgeInsets.all(WittSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
                 children: [
-                  if (q.isAnswered)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: WittSpacing.xs),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: WittSpacing.xs,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: WittColors.success.withAlpha(26),
-                        borderRadius: WittSpacing.borderRadiusFull,
-                      ),
-                      child: Text(
-                        '✓ Answered',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: WittColors.success,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                  GestureDetector(
+                    onTap: () =>
+                        ref.read(forumProvider.notifier).toggleUpvote(q.id),
+                    child: Icon(
+                      q.isUpvoted
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_upward_outlined,
+                      color: q.isUpvoted ? WittColors.primary : null,
+                      size: 20,
                     ),
-                  Text(
-                    q.title,
-                    style: theme.textTheme.titleSmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: WittSpacing.xs),
                   Text(
-                    q.body,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? WittColors.textSecondaryDark
-                          : WittColors.textSecondary,
+                    '${q.votes}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: q.isUpvoted ? WittColors.primary : null,
+                      fontWeight: FontWeight.w700,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: WittSpacing.sm),
-                  Row(
-                    children: [
-                      WittAvatar(
-                        initials: q.authorAvatar,
-                        size: WittAvatarSize.xs,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(q.authorName, style: theme.textTheme.labelSmall),
-                      const Spacer(),
-                      const Icon(Icons.chat_bubble_outline_rounded, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${q.answerCount}',
-                        style: theme.textTheme.labelSmall,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: WittSpacing.xs),
-                  Wrap(
-                    spacing: WittSpacing.xs,
-                    children: q.tags
-                        .map((t) => WittChip(label: '#$t', onTap: () {}))
-                        .toList(),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(width: WittSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (q.isAnswered)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: WittSpacing.xs),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: WittSpacing.xs,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: WittColors.success.withAlpha(26),
+                          borderRadius: WittSpacing.borderRadiusFull,
+                        ),
+                        child: Text(
+                          '✓ Answered',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: WittColors.success,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    Text(
+                      q.title,
+                      style: theme.textTheme.titleSmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: WittSpacing.xs),
+                    Text(
+                      q.body,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? WittColors.textSecondaryDark
+                            : WittColors.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: WittSpacing.sm),
+                    Row(
+                      children: [
+                        WittAvatar(
+                          initials: q.authorAvatar,
+                          size: WittAvatarSize.xs,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(q.authorName, style: theme.textTheme.labelSmall),
+                        const Spacer(),
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${q.answerCount}',
+                          style: theme.textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: WittSpacing.xs),
+                    Wrap(
+                      spacing: WittSpacing.xs,
+                      children: q.tags
+                          .map((t) => WittChip(label: '#$t', onTap: () {}))
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -605,78 +659,134 @@ class _MarketplaceTab extends ConsumerWidget {
         ...decks.map(
           (d) => Padding(
             padding: const EdgeInsets.only(bottom: WittSpacing.sm),
-            child: WittCard(
-              padding: const EdgeInsets.all(WittSpacing.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          d.title,
-                          style: theme.textTheme.titleSmall,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: WittSpacing.xs),
-                        Row(
-                          children: [
-                            WittAvatar(
-                              initials: d.authorAvatar,
-                              size: WittAvatarSize.xs,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              d.authorName,
-                              style: theme.textTheme.labelSmall,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: WittSpacing.xs),
-                        Row(
-                          children: [
-                            const Icon(Icons.style_rounded, size: 12),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${d.cardCount} cards',
-                              style: theme.textTheme.labelSmall,
-                            ),
-                            const SizedBox(width: WittSpacing.md),
-                            const Icon(Icons.download_rounded, size: 12),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${d.downloads}',
-                              style: theme.textTheme.labelSmall,
-                            ),
-                            const SizedBox(width: WittSpacing.md),
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 12,
-                              color: WittColors.streak,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              d.rating.toStringAsFixed(1),
-                              style: theme.textTheme.labelSmall,
-                            ),
-                          ],
-                        ),
-                      ],
+            child: GestureDetector(
+              onLongPress: () => showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (_) => Container(
+                  decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
                     ),
                   ),
-                  const SizedBox(width: WittSpacing.md),
-                  WittButton(
-                    label: d.isPremium
-                        ? '\$${d.priceUsd?.toStringAsFixed(2)}'
-                        : 'Get',
-                    onPressed: () {},
-                    variant: d.isPremium
-                        ? WittButtonVariant.primary
-                        : WittButtonVariant.outline,
-                    size: WittButtonSize.sm,
+                  padding: const EdgeInsets.all(WittSpacing.xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Report Deck', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: WittSpacing.md),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.flag_outlined,
+                          color: WittColors.error,
+                        ),
+                        title: const Text('Inappropriate content'),
+                        onTap: () {
+                          ref
+                              .read(marketplaceProvider.notifier)
+                              .reportDeck(d.id);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Deck reported. Thank you.'),
+                            ),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.block_rounded),
+                        title: const Text('Spam or misleading'),
+                        onTap: () {
+                          ref
+                              .read(marketplaceProvider.notifier)
+                              .reportDeck(d.id);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Deck reported. Thank you.'),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              child: WittCard(
+                padding: const EdgeInsets.all(WittSpacing.md),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            d.title,
+                            style: theme.textTheme.titleSmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: WittSpacing.xs),
+                          Row(
+                            children: [
+                              WittAvatar(
+                                initials: d.authorAvatar,
+                                size: WittAvatarSize.xs,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                d.authorName,
+                                style: theme.textTheme.labelSmall,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: WittSpacing.xs),
+                          Row(
+                            children: [
+                              const Icon(Icons.style_rounded, size: 12),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${d.cardCount} cards',
+                                style: theme.textTheme.labelSmall,
+                              ),
+                              const SizedBox(width: WittSpacing.md),
+                              const Icon(Icons.download_rounded, size: 12),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${d.downloads}',
+                                style: theme.textTheme.labelSmall,
+                              ),
+                              const SizedBox(width: WittSpacing.md),
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 12,
+                                color: WittColors.streak,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                d.rating.toStringAsFixed(1),
+                                style: theme.textTheme.labelSmall,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: WittSpacing.md),
+                    WittButton(
+                      label: d.isPremium
+                          ? '\$${d.priceUsd?.toStringAsFixed(2)}'
+                          : 'Get',
+                      onPressed: () {},
+                      variant: d.isPremium
+                          ? WittButtonVariant.primary
+                          : WittButtonVariant.outline,
+                      size: WittButtonSize.sm,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

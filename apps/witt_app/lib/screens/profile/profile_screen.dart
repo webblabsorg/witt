@@ -8,6 +8,8 @@ import '../../features/progress/providers/progress_providers.dart';
 import '../../features/learn/providers/test_prep_providers.dart';
 import '../../features/auth/auth_state.dart';
 import '../../features/onboarding/onboarding_state.dart';
+import '../../core/providers/theme_provider.dart';
+import '../../core/providers/locale_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -357,7 +359,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     title: 'App Language',
                     subtitle: 'Change interface language',
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {},
+                    onTap: () => _showLanguageSheet(context, ref),
                   ),
 
                   // ── Section: Support ───────────────────────────────
@@ -399,6 +401,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showAppearanceSheet(BuildContext context, WidgetRef ref) {
+    final current = ref.read(themeProvider);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -417,17 +420,83 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ListTile(
               leading: const Icon(Icons.light_mode_rounded),
               title: const Text('Light'),
-              onTap: () => Navigator.pop(context),
+              trailing: current == ThemeMode.light
+                  ? const Icon(Icons.check_rounded, color: WittColors.primary)
+                  : null,
+              onTap: () {
+                ref.read(themeProvider.notifier).setTheme(ThemeMode.light);
+                Navigator.pop(context);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.dark_mode_rounded),
               title: const Text('Dark'),
-              onTap: () => Navigator.pop(context),
+              trailing: current == ThemeMode.dark
+                  ? const Icon(Icons.check_rounded, color: WittColors.primary)
+                  : null,
+              onTap: () {
+                ref.read(themeProvider.notifier).setTheme(ThemeMode.dark);
+                Navigator.pop(context);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.phone_android_rounded),
               title: const Text('System Default'),
-              onTap: () => Navigator.pop(context),
+              trailing: current == ThemeMode.system
+                  ? const Icon(Icons.check_rounded, color: WittColors.primary)
+                  : null,
+              onTap: () {
+                ref.read(themeProvider.notifier).setTheme(ThemeMode.system);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageSheet(BuildContext context, WidgetRef ref) {
+    final current = ref.read(localeProvider).languageCode;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.55,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(WittSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'App Language',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: WittSpacing.lg),
+            Expanded(
+              child: ListView(
+                children: appLocales.map((l) {
+                  final selected = l.code == current;
+                  return ListTile(
+                    leading: Text(l.flag, style: const TextStyle(fontSize: 22)),
+                    title: Text(l.name),
+                    trailing: selected
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: WittColors.primary,
+                          )
+                        : null,
+                    onTap: () {
+                      ref.read(localeProvider.notifier).setLocale(l.code);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),

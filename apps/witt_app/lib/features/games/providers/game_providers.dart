@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 import '../models/game_models.dart';
 import '../../../core/persistence/hive_boxes.dart';
@@ -328,10 +329,32 @@ class GameSessionNotifier extends Notifier<GameSessionState?> {
     );
   }
 
-  void endGame() {
+  Future<void> endGame() async {
     final s = state;
     if (s != null) {
       Analytics.completeGame(s.gameId, s.score, s.isComplete);
+      // Increment local Hive counter (optimistic, always)
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      final lastReset =
+          gamesBox.get(kKeyGamesLastResetDate, defaultValue: '') as String;
+      final current = lastReset == today
+          ? (gamesBox.get(kKeyGamesPlayedToday, defaultValue: 0) as int)
+          : 0;
+      gamesBox.put(kKeyGamesLastResetDate, today);
+      gamesBox.put(kKeyGamesPlayedToday, current + 1);
+
+      // Server-authoritative: call record_game_played() RPC
+      final uid = Supabase.instance.client.auth.currentUser?.id;
+      if (uid != null) {
+        try {
+          await Supabase.instance.client.rpc(
+            'record_game_played',
+            params: {'p_user_id': uid, 'p_game_id': s.gameId},
+          );
+        } catch (_) {
+          // Non-fatal: local counter already updated
+        }
+      }
     }
     _timer?.cancel();
     state = null;

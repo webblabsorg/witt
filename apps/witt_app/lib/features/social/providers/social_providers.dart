@@ -405,17 +405,31 @@ class ForumNotifier extends Notifier<List<ForumQuestion>> {
       );
     }).toList();
   }
+
+  void reportQuestion(String questionId) {
+    Analytics.reportContent('community_post', questionId, 'inappropriate');
+  }
 }
 
 final forumProvider = NotifierProvider<ForumNotifier, List<ForumQuestion>>(
   ForumNotifier.new,
 );
 
-// ── Marketplace Provider ──────────────────────────────────────────────────
+// ── Marketplace Notifier ──────────────────────────────────────────────────
 
-final marketplaceProvider = Provider<List<MarketplaceDeck>>(
-  (_) => _sampleDecks,
-);
+class MarketplaceNotifier extends Notifier<List<MarketplaceDeck>> {
+  @override
+  List<MarketplaceDeck> build() => _sampleDecks;
+
+  void reportDeck(String deckId) {
+    Analytics.reportContent('deck', deckId, 'inappropriate');
+  }
+}
+
+final marketplaceProvider =
+    NotifierProvider<MarketplaceNotifier, List<MarketplaceDeck>>(
+      MarketplaceNotifier.new,
+    );
 
 // ── Friends Provider ──────────────────────────────────────────────────────
 

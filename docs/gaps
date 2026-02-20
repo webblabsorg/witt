@@ -1,57 +1,32 @@
-## Gaps summary (current state)
 
-### P0 — Blocking (must fix before any test run)
 
-**Monetization package compile error — `Entitlement` name collision**
-- `subrail_flutter` exports its own `Entitlement` type; the app's `witt_monetization` package also has one
-- Both are imported in the same file: @packages/witt_monetization/lib/src/providers/entitlement_provider.dart#2-3
-- Results in 6 compile errors + a nullability/spread crash on `unlockedExamIds`: @packages/witt_monetization/lib/src/providers/entitlement_provider.dart#33
-- **Impact:** `flutter test` fails before running a single test. All 17 Phase 4 smoke tests are blocked.
+## Current gaps (real state now)
 
----
+### P0
+- **None currently blocking** (analyze clean, tests passing in smoke suite).
 
-### P1 — Important quality
+### P1
+1. **Multiplayer still UI-only** (no Supabase Realtime session/channel wiring yet).  
+2. **Server-authoritative limits not yet enforced in app flow** (`record_game_played()` / daily post limit tables exist but app logic still local-first).
 
-| # | Gap | Status |
-|---|-----|--------|
-| 1 | **Smoke tests blocked** by P0 above | Blocked |
-| 2 | **Multiplayer is UI-only** — `multiplayerStatusProvider` is local state, no Supabase Realtime channel | Not started |
-| 3 | **Translation is mock** — [_mockTranslate()](cci:1://file:///Users/aa/Documents/Projects/witt/apps/witt_app/lib/features/translation/providers/translation_providers.dart:226:2-266:3) returns `[fr] text` fallback; no Google Cloud/DeepL call wired | Not started |
-| 4 | **Server-authoritative limits not enforced in app flows** — `record_game_played()` function and `social_post_daily_limits` table exist in DB but are never called from the app | Not started |
+### P2
+3. **Report UX still partial** (feed has reporting path; forum/deck flows still incomplete in UI).  
+4. **Supabase advisors check still pending** (security/performance scan after additive migration).  
+5. **Push notifications wiring still pending** (OneSignal initialized, event triggers missing).  
+6. **Language setting tile still stubbed** (`onTap` placeholder).  
+7. **Theme/appearance setting still stubbed** (no ThemeMode provider integration).
 
 ---
 
-### P2 — Polish / hardening
+## What’s solid now ✅
 
-| # | Gap | Status |
-|---|-----|--------|
-| 5 | **Report UX is partial** — [reportPost()](cci:1://file:///Users/aa/Documents/Projects/witt/apps/witt_app/lib/features/social/providers/social_providers.dart:299:2-304:3) exists on feed only; forum questions and marketplace decks have no report action in UI | Partial |
-| 6 | **Supabase advisor check** not run after phase4_additive migration — may have security/performance notices | Not done |
-| 7 | **Notifications not wired** — OneSignal initialized but no push triggers for: new post in joined group, assignment due, friend request, game invite | Not started |
-| 8 | **App language setting is a stub** — tile exists in profile but `onTap: () {}` | Stub |
-| 9 | **Appearance/theme setting is a stub** — sheet shows options but no `ThemeMode` provider wired | Stub |
+- `flutter analyze --no-pub`: clean
+- Phase 4 routing + role guard
+- Hive persistence for social/games/translation
+- Analytics utility + key action wiring
+- Content moderation flag on social post model
+- Supabase additive migration applied
+- Translation stack switched to OSS LibreTranslate
+- Currency localization integrated into paywall surfaces
 
----
-
-### What's solid ✅
-
-- `flutter analyze --no-pub` → **no issues**
-- Phase 4 UI screens all exist and are routed (social, play hub, translation, teacher, parent, profile)
-- Hive persistence wired for social/games/translation state
-- Role-based route guard in router
-- Analytics utility wired into key actions
-- Content moderation flag on [SocialPost](cci:2://file:///Users/aa/Documents/Projects/witt/apps/witt_app/lib/features/social/models/social_models.dart:12:0-71:1) model
-- Supabase schema migration applied (7 new tables + `record_game_played()` function)
-- 17 smoke tests written (blocked by P0 compile error)
-
----
-
-### Recommended fix order
-
-1. **Fix P0** — alias `subrail_flutter`'s `Entitlement` import in [entitlement_provider.dart](cci:7://file:///Users/aa/Documents/Projects/witt/packages/witt_monetization/lib/src/providers/entitlement_provider.dart:0:0-0:0) (1-line hide)
-2. **Verify tests pass** — `flutter test` should then give a clean run
-3. **Wire `record_game_played()`** into [GameSessionNotifier.endGame()](cci:1://file:///Users/aa/Documents/Projects/witt/apps/witt_app/lib/features/games/providers/game_providers.dart:324:2-331:3) for server-authoritative free limit
-4. **Run Supabase advisor** after schema changes
-5. **Stub out theme/language providers** so settings tiles are functional
-
-Want me to start with the P0 fix now?
+If you want, next I’ll do the **P1 server-authoritative limits** wiring first (game/post limits via Supabase) since that’s the highest remaining risk.
