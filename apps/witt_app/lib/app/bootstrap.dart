@@ -8,6 +8,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/onboarding/onboarding_state.dart';
+import '../core/persistence/hive_boxes.dart';
 
 /// Initializes all services and runs the app.
 /// Single entry point — call Bootstrap.run(app) from main().
@@ -28,6 +29,7 @@ class Bootstrap {
     // Initialize Hive (local key-value storage)
     await Hive.initFlutter();
     await openOnboardingBox();
+    await openPersistenceBoxes();
 
     // Initialize Supabase
     await Supabase.initialize(
