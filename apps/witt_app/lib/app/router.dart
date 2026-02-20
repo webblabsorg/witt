@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:meta/meta.dart';
 
 import 'scaffold_with_nav.dart';
 import '../features/onboarding/onboarding_state.dart';
@@ -267,4 +268,55 @@ bool _requiresAuth(String location) {
 bool _requiresFullAuth(String location) {
   const fullAuthOnly = ['/profile', '/sage'];
   return fullAuthOnly.any((p) => location.startsWith(p));
+}
+
+// ── Testable redirect logic ─────────────────────────────────────────────────
+// Extracted so integration tests can exercise redirect decisions without
+// needing a full GoRouter + widget tree.
+
+/// Computes the redirect destination for a given [location] given the current
+/// [onboarding] and [auth] state. Returns null if no redirect is needed.
+@visibleForTesting
+String? computeRedirect({
+  required String location,
+  required String fullUri,
+  required OnboardingData onboarding,
+  required AuthState auth,
+  Map<String, String> queryParameters = const {},
+}) {
+  final onboardingDone = onboarding.isCompleted;
+
+  if (location == '/community') return '/social';
+
+  if (!onboardingDone) {
+    if (!location.startsWith('/onboarding')) {
+      final dest = Uri.encodeComponent(fullUri);
+      return '/onboarding/splash?from=$dest';
+    }
+    return null;
+  }
+
+  if (onboardingDone && location.startsWith('/onboarding')) {
+    final from = queryParameters['from'];
+    if (from != null && from.isNotEmpty) {
+      return Uri.decodeComponent(from);
+    }
+    return '/home';
+  }
+
+  if (auth.status == AuthStatus.unauthenticated && _requiresAuth(location)) {
+    final dest = Uri.encodeComponent(fullUri);
+    return '/onboarding/auth?from=$dest';
+  }
+
+  if (auth.isAnonymous && _requiresFullAuth(location)) {
+    final dest = Uri.encodeComponent(fullUri);
+    return '/onboarding/auth?from=$dest';
+  }
+
+  final role = onboarding.role;
+  if (location == '/profile/teacher' && role != 'teacher') return '/profile';
+  if (location == '/profile/parent' && role != 'parent') return '/profile';
+
+  return null;
 }
