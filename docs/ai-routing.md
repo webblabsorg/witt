@@ -97,15 +97,21 @@ AI Feature Request
 
 ## Known Limitations & Future Work
 
-### Usage Limit Persistence (Medium Priority)
-`UsageNotifier` (in `witt_ai/src/providers/ai_providers.dart`) tracks daily/monthly usage counts **in-memory only**. Limits reset on app restart and are not enforced cross-device.
+### Usage Limit Persistence ✅ Resolved
+`HiveUsageNotifier` (`apps/witt_app/lib/core/persistence/persistent_notifiers.dart`) persists all daily/monthly usage counters to Hive box `ai_usage`. Hydrates on app start, flushes on every `recordUsage()` call. Daily and monthly resets are preserved correctly across restarts.
 
-**Current behaviour:** Free-tier limits (e.g. 10 Sage messages/day) are enforced within a single app session only.
+### Progress XP, Badges, Streak & Activity ✅ Resolved
+All progress state is now Hive-persisted via subclasses in `persistent_notifiers.dart`:
+- `HiveXpNotifier` → `kBoxProgress / xp`
+- `HiveBadgeNotifier` → `kBoxProgress / badges`
+- `HiveStreakNotifier` → `kBoxProgress / streak_*`
+- `HiveDailyActivityNotifier` → `kBoxProgress / daily_activity` (JSON-encoded map)
 
-**Production fix required:** Persist usage records to Supabase `user_usage` table and hydrate on app start. The `UsageRecord` model and `recordUsage()` / `canUse()` / `limitMessage()` API are already designed to support this — only the persistence layer is missing.
+All 5 in-memory providers are overridden at `ProviderScope` level in `main.dart` — zero call-site changes required.
 
-### Purchase Flow (Medium Priority)
-`PurchaseFlowNotifier.purchase()` is a local simulation (delay + grant trial). Real Subrail/RevenueCat SDK integration is required before App Store submission.
+### Purchase Flow ⚠️ Open — Pre-launch blocker
+`PurchaseFlowNotifier.purchase()` (`packages/witt_monetization/lib/src/providers/entitlement_provider.dart`) is a **simulated flow** (2-second delay + grant trial entitlement locally). No real billing SDK is called.
 
-### Progress XP & Badges (Low Priority)
-XP and badge state is in-memory (Riverpod `NotifierProvider`). Persisting to Supabase or Hive is needed for cross-session continuity.
+**Required before App Store submission:** Integrate Subrail or RevenueCat SDK. The `purchase()`, `restore()`, and `purchaseExam()` method signatures are already in place — only the SDK call bodies need replacing.
+
+**Cross-device entitlement sync** also requires a Supabase `user_entitlements` table and hydration on auth state change.
