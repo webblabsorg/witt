@@ -200,7 +200,7 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
                       .read(onboardingProvider.notifier)
                       .setLanguage(_selected);
                   if (context.mounted) {
-                    context.go('/onboarding/wizard/1');
+                    context.go('/onboarding/intro');
                   }
                 },
                 isFullWidth: true,

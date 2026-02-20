@@ -4,8 +4,26 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../onboarding_state.dart';
+import '../data/countries_by_continent.dart';
+import '../data/exam_catalog.dart';
 import '../../../core/security/privacy_service.dart';
 import '../../../core/translation/live_text.dart';
+
+enum _FlowStep {
+  role,
+  level,
+  country,
+  exams,
+  examDates,
+  studentPrefs,
+  parentSetup,
+  parentGoals,
+  teacherSubjects,
+  teacherGradeLevels,
+  teacherClassSize,
+  teacherGoals,
+  notifications,
+}
 
 class WizardScreen extends ConsumerStatefulWidget {
   const WizardScreen({super.key, required this.step});
@@ -16,15 +34,23 @@ class WizardScreen extends ConsumerStatefulWidget {
 }
 
 class _WizardScreenState extends ConsumerState<WizardScreen> {
-  static const int _totalSteps = 10;
-
   String? _selectedRole;
   String? _selectedLevel;
   String? _selectedCountry;
+  String? _childSetupType;
+  String? _classSize;
   List<String> _selectedExams = [];
-  int _studyMinutes = 30;
   List<String> _selectedSubjects = [];
   List<String> _selectedPrefs = [];
+  List<String> _selectedGradeLevels = [];
+  final Set<String> _expandedContinents = <String>{
+    'North America',
+    'South America',
+    'Europe',
+    'Africa',
+    'Asia',
+    'Oceania',
+  };
 
   static const _roles = [
     _Option('student', '🎓', 'Student'),
@@ -41,44 +67,6 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     'Other',
   ];
 
-  static const _exams = [
-    'SAT',
-    'ACT',
-    'GRE',
-    'GMAT',
-    'IELTS',
-    'TOEFL',
-    'WAEC',
-    'JAMB',
-    'NECO',
-    'BECE',
-    'PSAT',
-    'AP',
-    'A-Levels',
-    'GCSE',
-    'USMLE',
-    'LSAT',
-    'MCAT',
-  ];
-
-  static const _studyOptions = [
-    _StudyOption(15, '15 min', 'Casual'),
-    _StudyOption(30, '30 min', 'Regular'),
-    _StudyOption(60, '1 hour', 'Serious'),
-    _StudyOption(120, '2+ hrs', 'Intense'),
-  ];
-
-  static const _subjects = [
-    'Math',
-    'Reading',
-    'Writing',
-    'Science',
-    'History',
-    'Languages',
-    'Economics',
-    'Computer Science',
-  ];
-
   static const _prefs = [
     _Option('flashcards', '🃏', 'Flashcards'),
     _Option('tests', '📝', 'Practice Tests'),
@@ -86,6 +74,46 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     _Option('reading', '📖', 'Reading'),
     _Option('lectures', '🎥', 'Video & Lectures'),
     _Option('ai', '🤖', 'AI Tutoring'),
+  ];
+
+  static const _parentGoals = [
+    _Option('track_progress', '📈', 'Track progress'),
+    _Option('improve_grades', '🏆', 'Improve grades'),
+    _Option('exam_readiness', '🎯', 'Prepare for exams'),
+    _Option('daily_accountability', '🗓️', 'Daily accountability'),
+  ];
+
+  static const _teacherGoals = [
+    _Option('track_students', '📊', 'Track student performance'),
+    _Option('assign_tests', '🧪', 'Assign practice tests'),
+    _Option('analyze_weak_areas', '🧠', 'Analyze weak areas'),
+    _Option('improve_outcomes', '🚀', 'Improve exam outcomes'),
+  ];
+
+  static const _teacherSubjects = [
+    'Math',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'English',
+    'History',
+    'Economics',
+    'Computer Science',
+  ];
+
+  static const _gradeLevels = [
+    'Grade 6-8',
+    'Grade 9-10',
+    'Grade 11-12',
+    'College Year 1-2',
+    'College Year 3+',
+  ];
+
+  static const _classSizes = [
+    '1-10 students',
+    '11-25 students',
+    '26-40 students',
+    '41+ students',
   ];
 
   @override
@@ -96,24 +124,423 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     _selectedLevel = data.educationLevel;
     _selectedCountry = data.country;
     _selectedExams = List.from(data.selectedExams);
-    _studyMinutes = data.studyTimeMinutes;
     _selectedSubjects = List.from(data.subjects);
     _selectedPrefs = List.from(data.learningPrefs);
+    _selectedGradeLevels = List.from(data.gradeLevels);
+    _childSetupType = data.childSetupType;
+    _classSize = data.classSize;
+  }
+
+  Widget _buildParentSetup(ThemeData theme, bool isDark) {
+    const options = [
+      _Option('one_child', '🧒', 'One child'),
+      _Option('multiple_children', '👨‍👩‍👧‍👦', 'Multiple children'),
+    ];
+
+    return _StepWrapper(
+      title: 'Who are you setting up for?',
+      subtitle: 'We will shape your parent dashboard around your family setup.',
+      child: Column(
+        children: options
+            .map((opt) {
+              final isSelected = _childSetupType == opt.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: WittSpacing.md),
+                child: GestureDetector(
+                  onTap: () async {
+                    setState(() => _childSetupType = opt.value);
+                    await ref
+                        .read(onboardingProvider.notifier)
+                        .setChildSetupType(opt.value);
+                    if (mounted) _next();
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.all(WittSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? WittColors.primaryContainer
+                          : (isDark
+                                ? WittColors.surfaceVariantDark
+                                : WittColors.surfaceVariant),
+                      borderRadius: WittSpacing.borderRadiusLg,
+                      border: Border.all(
+                        color: isSelected
+                            ? WittColors.primary
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(opt.emoji, style: const TextStyle(fontSize: 28)),
+                        const SizedBox(width: WittSpacing.lg),
+                        Expanded(
+                          child: Text(
+                            opt.label,
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: WittColors.primary,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            })
+            .toList(growable: false),
+      ),
+    );
+  }
+
+  Widget _buildTeacherSubjects(
+    ThemeData theme,
+    bool isDark,
+    String continueLabel,
+  ) {
+    return _StepWrapper(
+      title: 'Which subjects do you teach?',
+      subtitle: 'Select all that apply.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ..._teacherSubjects.map((subject) {
+            final isSelected = _selectedSubjects.contains(subject);
+            return SwitchListTile(
+              value: isSelected,
+              onChanged: (v) {
+                setState(() {
+                  if (v) {
+                    _selectedSubjects.add(subject);
+                  } else {
+                    _selectedSubjects.remove(subject);
+                  }
+                });
+              },
+              title: Text(subject, style: theme.textTheme.bodyLarge),
+              activeThumbColor: WittColors.primary,
+              contentPadding: EdgeInsets.zero,
+            );
+          }),
+          const SizedBox(height: WittSpacing.xxl),
+          WittButton(
+            label: continueLabel,
+            onPressed: _selectedSubjects.isEmpty
+                ? null
+                : () async {
+                    await ref
+                        .read(onboardingProvider.notifier)
+                        .setSubjects(_selectedSubjects);
+                    if (mounted) _next();
+                  },
+            isFullWidth: true,
+            size: WittButtonSize.lg,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeacherGradeLevels(
+    ThemeData theme,
+    bool isDark,
+    String continueLabel,
+  ) {
+    return _StepWrapper(
+      title: 'Which grade levels do you support?',
+      subtitle: 'Select all that apply.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: WittSpacing.sm,
+            runSpacing: WittSpacing.sm,
+            children: _gradeLevels
+                .map((grade) {
+                  final isSelected = _selectedGradeLevels.contains(grade);
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedGradeLevels.remove(grade);
+                        } else {
+                          _selectedGradeLevels.add(grade);
+                        }
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: WittSpacing.lg,
+                        vertical: WittSpacing.md,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? WittColors.primaryContainer
+                            : (isDark
+                                  ? WittColors.surfaceVariantDark
+                                  : WittColors.surfaceVariant),
+                        borderRadius: WittSpacing.borderRadiusMd,
+                        border: Border.all(
+                          color: isSelected
+                              ? WittColors.primary
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(grade, style: theme.textTheme.labelLarge),
+                    ),
+                  );
+                })
+                .toList(growable: false),
+          ),
+          const SizedBox(height: WittSpacing.xxxl),
+          WittButton(
+            label: continueLabel,
+            onPressed: _selectedGradeLevels.isEmpty
+                ? null
+                : () async {
+                    await ref
+                        .read(onboardingProvider.notifier)
+                        .setGradeLevels(_selectedGradeLevels);
+                    if (mounted) _next();
+                  },
+            isFullWidth: true,
+            size: WittButtonSize.lg,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeacherClassSize(ThemeData theme, bool isDark) {
+    return _StepWrapper(
+      title: 'How big is your class?',
+      subtitle: 'Optional — helps tailor pacing and recommendations.',
+      child: Column(
+        children: [
+          ..._classSizes.map((size) {
+            final isSelected = _classSize == size;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: WittSpacing.sm),
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() => _classSize = size);
+                  await ref
+                      .read(onboardingProvider.notifier)
+                      .setClassSize(size);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: WittSpacing.lg,
+                    vertical: WittSpacing.md,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? WittColors.primaryContainer
+                        : (isDark
+                              ? WittColors.surfaceVariantDark
+                              : WittColors.surfaceVariant),
+                    borderRadius: WittSpacing.borderRadiusMd,
+                    border: Border.all(
+                      color: isSelected
+                          ? WittColors.primary
+                          : Colors.transparent,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(size, style: theme.textTheme.bodyLarge),
+                      ),
+                      if (isSelected)
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: WittColors.primary,
+                          size: 20,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: WittSpacing.xxl),
+          WittButton(
+            label: 'Continue',
+            onPressed: _next,
+            isFullWidth: true,
+            size: WittButtonSize.lg,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoalSelection(
+    ThemeData theme,
+    bool isDark,
+    String continueLabel, {
+    required String title,
+    required String subtitle,
+    required List<_Option> options,
+  }) {
+    return _StepWrapper(
+      title: title,
+      subtitle: subtitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: WittSpacing.sm,
+            runSpacing: WittSpacing.sm,
+            children: options
+                .map((p) {
+                  final isSelected = _selectedPrefs.contains(p.value);
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedPrefs.remove(p.value);
+                        } else {
+                          _selectedPrefs.add(p.value);
+                        }
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: WittSpacing.lg,
+                        vertical: WittSpacing.md,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? WittColors.primaryContainer
+                            : (isDark
+                                  ? WittColors.surfaceVariantDark
+                                  : WittColors.surfaceVariant),
+                        borderRadius: WittSpacing.borderRadiusMd,
+                        border: Border.all(
+                          color: isSelected
+                              ? WittColors.primary
+                              : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(p.emoji, style: const TextStyle(fontSize: 20)),
+                          const SizedBox(width: WittSpacing.sm),
+                          Text(p.label, style: theme.textTheme.labelLarge),
+                        ],
+                      ),
+                    ),
+                  );
+                })
+                .toList(growable: false),
+          ),
+          const SizedBox(height: WittSpacing.xxxl),
+          WittButton(
+            label: continueLabel,
+            onPressed: () async {
+              await ref
+                  .read(onboardingProvider.notifier)
+                  .setLearningPrefs(_selectedPrefs);
+              if (mounted) _next();
+            },
+            isFullWidth: true,
+            size: WittButtonSize.lg,
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<_FlowStep> get _flowSteps {
+    return switch (_selectedRole) {
+      'parent' => [
+        _FlowStep.role,
+        _FlowStep.parentSetup,
+        _FlowStep.level,
+        _FlowStep.country,
+        _FlowStep.exams,
+        _FlowStep.examDates,
+        _FlowStep.parentGoals,
+        _FlowStep.notifications,
+      ],
+      'teacher' => [
+        _FlowStep.role,
+        _FlowStep.teacherSubjects,
+        _FlowStep.teacherGradeLevels,
+        _FlowStep.country,
+        _FlowStep.exams,
+        _FlowStep.teacherClassSize,
+        _FlowStep.teacherGoals,
+        _FlowStep.notifications,
+      ],
+      _ => [
+        _FlowStep.role,
+        _FlowStep.level,
+        _FlowStep.country,
+        _FlowStep.exams,
+        _FlowStep.examDates,
+        _FlowStep.studentPrefs,
+        _FlowStep.notifications,
+      ],
+    };
+  }
+
+  int get _totalSteps => _flowSteps.length;
+
+  int get _resolvedStep => widget.step.clamp(1, _totalSteps);
+
+  List<ExamDefinition> get _generalExams => examCatalog
+      .where((e) => e.category == ExamCategory.general)
+      .toList(growable: false);
+
+  List<ExamDefinition> get _countrySpecificExams {
+    final country = _selectedCountry;
+    if (country == null || country.isEmpty) {
+      return examCatalog
+          .where((e) => e.category == ExamCategory.countrySpecific)
+          .toList(growable: false);
+    }
+    final matched = examCatalog
+        .where(
+          (e) =>
+              e.category == ExamCategory.countrySpecific &&
+              e.countries.contains(country),
+        )
+        .toList(growable: false);
+    final unmatched = examCatalog
+        .where(
+          (e) =>
+              e.category == ExamCategory.countrySpecific &&
+              !e.countries.contains(country),
+        )
+        .toList(growable: false);
+    return [...matched, ...unmatched];
   }
 
   void _next() {
-    if (widget.step < _totalSteps) {
-      context.go('/onboarding/wizard/${widget.step + 1}');
+    if (_resolvedStep < _totalSteps) {
+      context.go('/onboarding/wizard/${_resolvedStep + 1}');
     } else {
       context.go('/onboarding/auth');
     }
   }
 
   void _back() {
-    if (widget.step > 1) {
-      context.go('/onboarding/wizard/${widget.step - 1}');
+    if (_resolvedStep > 1) {
+      context.go('/onboarding/wizard/${_resolvedStep - 1}');
     } else {
-      context.go('/onboarding/language');
+      context.go('/onboarding/intro');
     }
   }
 
@@ -153,14 +580,14 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
                   const SizedBox(width: WittSpacing.md),
                   Expanded(
                     child: WittProgressBar(
-                      value: widget.step / _totalSteps,
+                      value: _resolvedStep / _totalSteps,
                       height: 6,
                       gradient: WittColors.primaryGradient,
                     ),
                   ),
                   const SizedBox(width: WittSpacing.md),
                   Text(
-                    '${widget.step}/$_totalSteps',
+                    '$_resolvedStep/$_totalSteps',
                     style: theme.textTheme.labelMedium,
                   ),
                 ],
@@ -191,18 +618,48 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     String enableNotificationsLabel,
     String notNowLabel,
   ) {
-    return switch (widget.step) {
-      1 => _buildQ1(theme, isDark),
-      2 => _buildQ2(theme, isDark),
-      3 => _buildQ3(theme, isDark),
-      4 => _buildQ4(theme, isDark, continueLabel),
-      5 => _buildQ5(theme, isDark, continueLabel),
-      6 => _buildQ6(theme, isDark, continueLabel),
-      7 => _buildQ7(theme, isDark, continueLabel),
-      8 => _buildQ8(theme, isDark, continueLabel),
-      9 => _buildQ9(theme, isDark, continueLabel),
-      10 => _buildQ10(theme, isDark, enableNotificationsLabel, notNowLabel),
-      _ => const SizedBox.shrink(),
+    final step = _flowSteps[_resolvedStep - 1];
+    return switch (step) {
+      _FlowStep.role => _buildQ1(theme, isDark),
+      _FlowStep.parentSetup => _buildParentSetup(theme, isDark),
+      _FlowStep.level => _buildQ2(theme, isDark),
+      _FlowStep.country => _buildQ3(theme, isDark),
+      _FlowStep.exams => _buildQ4(theme, isDark, continueLabel),
+      _FlowStep.examDates => _buildQ5(theme, isDark, continueLabel),
+      _FlowStep.studentPrefs => _buildQ9(theme, isDark, continueLabel),
+      _FlowStep.parentGoals => _buildGoalSelection(
+        theme,
+        isDark,
+        continueLabel,
+        title: 'What are your goals as a parent?',
+        subtitle: 'Choose what matters most for your child.',
+        options: _parentGoals,
+      ),
+      _FlowStep.teacherSubjects => _buildTeacherSubjects(
+        theme,
+        isDark,
+        continueLabel,
+      ),
+      _FlowStep.teacherGradeLevels => _buildTeacherGradeLevels(
+        theme,
+        isDark,
+        continueLabel,
+      ),
+      _FlowStep.teacherClassSize => _buildTeacherClassSize(theme, isDark),
+      _FlowStep.teacherGoals => _buildGoalSelection(
+        theme,
+        isDark,
+        continueLabel,
+        title: 'What outcomes matter most to you?',
+        subtitle: 'We will tailor the teacher dashboard accordingly.',
+        options: _teacherGoals,
+      ),
+      _FlowStep.notifications => _buildQ10(
+        theme,
+        isDark,
+        enableNotificationsLabel,
+        notNowLabel,
+      ),
     };
   }
 
@@ -356,8 +813,11 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
 
   // Q2: Education level
   Widget _buildQ2(ThemeData theme, bool isDark) {
+    final title = _selectedRole == 'parent'
+        ? "What is your child's education level?"
+        : "What's your education level?";
     return _StepWrapper(
-      title: "What's your education level?",
+      title: title,
       child: Column(
         children: _levels.map((level) {
           final isSelected = _selectedLevel == level;
@@ -405,107 +865,114 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
 
   // Q3: Country
   Widget _buildQ3(ThemeData theme, bool isDark) {
-    final countries = [
-      'United States',
-      'United Kingdom',
-      'Nigeria',
-      'Ghana',
-      'Kenya',
-      'India',
-      'Canada',
-      'Australia',
-      'South Africa',
-      'Germany',
-      'France',
-      'Brazil',
-      'Mexico',
-      'China',
-      'Japan',
-      'Other',
-    ];
     return _StepWrapper(
       title: "Where are you based?",
       subtitle: 'Sets your currency and suggests relevant exams.',
       child: Column(
-        children: [
-          ...countries.map((c) {
-            final isSelected = _selectedCountry == c;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: WittSpacing.sm),
-              child: GestureDetector(
-                onTap: () async {
-                  setState(() => _selectedCountry = c);
-                  await ref.read(onboardingProvider.notifier).setCountry(c);
-                  if (mounted) _next();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: WittSpacing.lg,
-                    vertical: WittSpacing.md,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? WittColors.primaryContainer
-                        : (isDark
-                              ? WittColors.surfaceVariantDark
-                              : WittColors.surfaceVariant),
-                    borderRadius: WittSpacing.borderRadiusMd,
-                    border: Border.all(
-                      color: isSelected
-                          ? WittColors.primary
-                          : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(c, style: theme.textTheme.bodyLarge),
-                      ),
-                      if (isSelected)
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          color: WittColors.primary,
-                          size: 20,
-                        ),
-                    ],
-                  ),
+        children: onboardingContinents
+            .map((group) {
+              final expanded = _expandedContinents.contains(group.continent);
+              return Container(
+                margin: const EdgeInsets.only(bottom: WittSpacing.md),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? WittColors.surfaceVariantDark
+                      : WittColors.surfaceVariant,
+                  borderRadius: WittSpacing.borderRadiusMd,
                 ),
-              ),
-            );
-          }),
-        ],
+                child: ExpansionTile(
+                  key: PageStorageKey<String>('continent-${group.continent}'),
+                  initiallyExpanded: expanded,
+                  onExpansionChanged: (open) {
+                    setState(() {
+                      if (open) {
+                        _expandedContinents.add(group.continent);
+                      } else {
+                        _expandedContinents.remove(group.continent);
+                      }
+                    });
+                  },
+                  title: Text(
+                    group.continent,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  children: group.countries
+                      .map((country) {
+                        final isSelected = _selectedCountry == country;
+                        return ListTile(
+                          title: Text(country),
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: WittColors.primary,
+                                  size: 20,
+                                )
+                              : null,
+                          onTap: () async {
+                            setState(() => _selectedCountry = country);
+                            await ref
+                                .read(onboardingProvider.notifier)
+                                .setCountry(country);
+                            if (mounted) _next();
+                          },
+                        );
+                      })
+                      .toList(growable: false),
+                ),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
 
   // Q4: Exams
   Widget _buildQ4(ThemeData theme, bool isDark, String continueLabel) {
+    final countrySpecific = _countrySpecificExams;
+    final general = _generalExams;
+    final title = _selectedRole == 'teacher'
+        ? 'What exams are your students preparing for?'
+        : _selectedRole == 'parent'
+        ? 'What exams is your child preparing for?'
+        : 'What are you preparing for?';
     return _StepWrapper(
-      title: 'What are you preparing for?',
+      title: title,
       subtitle: 'Select one or more exams.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: WittSpacing.sm,
-            runSpacing: WittSpacing.sm,
-            children: _exams.map((exam) {
-              final isSelected = _selectedExams.contains(exam);
-              return WittChip(
-                label: exam,
-                isSelected: isSelected,
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _selectedExams.remove(exam);
-                    } else {
-                      _selectedExams.add(exam);
-                    }
-                  });
-                },
-              );
-            }).toList(),
+          _ExamSection(
+            title: 'Country-specific exams',
+            subtitle: _selectedCountry == null
+                ? 'Select your country in the previous step to prioritize relevant exams.'
+                : 'Prioritized for ${_selectedCountry!}.',
+            exams: countrySpecific,
+            selectedExams: _selectedExams,
+            onToggle: (exam) {
+              setState(() {
+                if (_selectedExams.contains(exam)) {
+                  _selectedExams.remove(exam);
+                } else {
+                  _selectedExams.add(exam);
+                }
+              });
+            },
+          ),
+          const SizedBox(height: WittSpacing.lg),
+          _ExamSection(
+            title: 'General and international exams',
+            subtitle: 'Widely used tests across regions and institutions.',
+            exams: general,
+            selectedExams: _selectedExams,
+            onToggle: (exam) {
+              setState(() {
+                if (_selectedExams.contains(exam)) {
+                  _selectedExams.remove(exam);
+                } else {
+                  _selectedExams.add(exam);
+                }
+              });
+            },
           ),
           const SizedBox(height: WittSpacing.xxxl),
           WittButton(
@@ -529,8 +996,11 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   // Q5: Exam dates
   Widget _buildQ5(ThemeData theme, bool isDark, String continueLabel) {
     final exams = ref.read(onboardingProvider).selectedExams;
+    final title = _selectedRole == 'parent'
+        ? "When is your child's exam?"
+        : 'When is your exam?';
     return _StepWrapper(
-      title: 'When is your exam?',
+      title: title,
       subtitle: "Select dates for each exam, or tap \"I don't know yet\".",
       child: Column(
         children: [
@@ -599,187 +1069,12 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     );
   }
 
-  // Q6: Target scores
-  Widget _buildQ6(ThemeData theme, bool isDark, String continueLabel) {
-    final exams = ref.read(onboardingProvider).selectedExams;
-    return _StepWrapper(
-      title: "What's your target score?",
-      subtitle: 'Drag the slider or tap "Not sure".',
-      child: Column(
-        children: [
-          ...exams.map((exam) {
-            final max = _examMaxScore(exam);
-            final current =
-                ref.read(onboardingProvider).targetScores[exam] ?? (max ~/ 2);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: WittSpacing.lg),
-              child: WittCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(exam, style: theme.textTheme.titleSmall),
-                        Text(
-                          '$current / $max',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: WittColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Slider(
-                      value: current.toDouble(),
-                      min: 0,
-                      max: max.toDouble(),
-                      divisions: max ~/ 10,
-                      activeColor: WittColors.primary,
-                      onChanged: (v) async {
-                        final scores = Map<String, int>.from(
-                          ref.read(onboardingProvider).targetScores,
-                        );
-                        scores[exam] = v.round();
-                        await ref
-                            .read(onboardingProvider.notifier)
-                            .setTargetScores(scores);
-                        setState(() {});
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-          const SizedBox(height: WittSpacing.lg),
-          WittButton(
-            label: continueLabel,
-            onPressed: _next,
-            isFullWidth: true,
-            size: WittButtonSize.lg,
-          ),
-        ],
-      ),
-    );
-  }
-
-  int _examMaxScore(String exam) => switch (exam) {
-    'SAT' => 1600,
-    'ACT' => 36,
-    'GRE' => 340,
-    'GMAT' => 800,
-    'IELTS' => 9,
-    'TOEFL' => 120,
-    _ => 100,
-  };
-
-  // Q7: Study time
-  Widget _buildQ7(ThemeData theme, bool isDark, String continueLabel) {
-    return _StepWrapper(
-      title: 'How much time can you study daily?',
-      child: Column(
-        children: [
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: WittSpacing.md,
-            mainAxisSpacing: WittSpacing.md,
-            childAspectRatio: 1.6,
-            children: _studyOptions.map((opt) {
-              final isSelected = _studyMinutes == opt.minutes;
-              return GestureDetector(
-                onTap: () async {
-                  setState(() => _studyMinutes = opt.minutes);
-                  await ref
-                      .read(onboardingProvider.notifier)
-                      .setStudyTime(opt.minutes);
-                  if (mounted) _next();
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? WittColors.primaryContainer
-                        : (isDark
-                              ? WittColors.surfaceVariantDark
-                              : WittColors.surfaceVariant),
-                    borderRadius: WittSpacing.borderRadiusLg,
-                    border: Border.all(
-                      color: isSelected
-                          ? WittColors.primary
-                          : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        opt.label,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: isSelected ? WittColors.primary : null,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(opt.sublabel, style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Q8: Subjects
-  Widget _buildQ8(ThemeData theme, bool isDark, String continueLabel) {
-    return _StepWrapper(
-      title: 'What subjects do you want to focus on?',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ..._subjects.map((subject) {
-            final isSelected = _selectedSubjects.contains(subject);
-            return SwitchListTile(
-              value: isSelected,
-              onChanged: (v) {
-                setState(() {
-                  if (v) {
-                    _selectedSubjects.add(subject);
-                  } else {
-                    _selectedSubjects.remove(subject);
-                  }
-                });
-              },
-              title: Text(subject, style: theme.textTheme.bodyLarge),
-              activeThumbColor: WittColors.primary,
-              contentPadding: EdgeInsets.zero,
-            );
-          }),
-          const SizedBox(height: WittSpacing.xxl),
-          WittButton(
-            label: continueLabel,
-            onPressed: () async {
-              await ref
-                  .read(onboardingProvider.notifier)
-                  .setSubjects(_selectedSubjects);
-              if (mounted) _next();
-            },
-            isFullWidth: true,
-            size: WittButtonSize.lg,
-          ),
-        ],
-      ),
-    );
-  }
-
   // Q9: Learning preferences
   Widget _buildQ9(ThemeData theme, bool isDark, String continueLabel) {
     return _StepWrapper(
-      title: 'How do you like to learn?',
+      title: _selectedRole == 'student'
+          ? 'How do you like to learn?'
+          : 'Your goals and preferences',
       subtitle: 'Select all that apply. Optional.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -959,18 +1254,67 @@ class _StepWrapper extends StatelessWidget {
   }
 }
 
+class _ExamSection extends StatelessWidget {
+  const _ExamSection({
+    required this.title,
+    required this.subtitle,
+    required this.exams,
+    required this.selectedExams,
+    required this.onToggle,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<ExamDefinition> exams;
+  final List<String> selectedExams;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(WittSpacing.lg),
+      decoration: BoxDecoration(
+        color: isDark
+            ? WittColors.surfaceVariantDark
+            : WittColors.surfaceVariant,
+        borderRadius: WittSpacing.borderRadiusLg,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LiveText(title, style: theme.textTheme.titleSmall),
+          const SizedBox(height: WittSpacing.xs),
+          LiveText(subtitle, style: theme.textTheme.bodySmall),
+          const SizedBox(height: WittSpacing.md),
+          Wrap(
+            spacing: WittSpacing.sm,
+            runSpacing: WittSpacing.sm,
+            children: exams
+                .map((exam) {
+                  final isSelected = selectedExams.contains(exam.name);
+                  return WittChip(
+                    label: exam.name,
+                    isSelected: isSelected,
+                    onTap: () => onToggle(exam.name),
+                  );
+                })
+                .toList(growable: false),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Option {
   const _Option(this.value, this.emoji, this.label);
   final String value;
   final String emoji;
   final String label;
-}
-
-class _StudyOption {
-  const _StudyOption(this.minutes, this.label, this.sublabel);
-  final int minutes;
-  final String label;
-  final String sublabel;
 }
 
 // ── COPPA parental consent dialog ─────────────────────────────────────────

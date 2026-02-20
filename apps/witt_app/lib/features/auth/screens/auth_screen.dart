@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../auth_state.dart';
+import '../../onboarding/onboarding_state.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -26,14 +27,26 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     return '/onboarding/paywall';
   }
 
-  Future<void> _handleResult(Future<void> Function() action) async {
+  String _roleDashboardDestination() {
+    final role = ref.read(onboardingProvider).role;
+    return switch (role) {
+      'teacher' => '/profile/teacher',
+      'parent' => '/profile/parent',
+      _ => '/home',
+    };
+  }
+
+  Future<void> _handleResult(
+    Future<void> Function() action, {
+    String? destination,
+  }) async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
     try {
       await action();
-      if (mounted) context.go(_postAuthDestination());
+      if (mounted) context.go(destination ?? _postAuthDestination());
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
@@ -67,14 +80,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 Container(
                   width: 72,
                   height: 72,
-                  decoration: const BoxDecoration(
-                    gradient: WittColors.primaryGradient,
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
+                    color: isDark
+                        ? WittColors.surfaceVariantDark
+                        : Colors.white,
+                    border: Border.all(
+                      color: isDark
+                          ? WittColors.outlineDark
+                          : WittColors.outline,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: 36,
+                  padding: const EdgeInsets.all(12),
+                  child: ClipOval(
+                    child: Image.asset(
+                      isDark
+                          ? 'assets/images/logo-white.png'
+                          : 'assets/images/logo-black.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
                 const SizedBox(height: WittSpacing.xxl),
@@ -200,6 +224,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     () => ref
                         .read(authNotifierProvider.notifier)
                         .signInAnonymously(),
+                    destination: _roleDashboardDestination(),
                   ),
                   isFullWidth: true,
                   size: WittButtonSize.lg,

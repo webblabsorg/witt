@@ -153,7 +153,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      Colors.white.withOpacity(_glowPulse.value * 0.06),
+                      Colors.white.withValues(alpha: _glowPulse.value * 0.06),
                       Colors.transparent,
                     ],
                   ),
@@ -196,7 +196,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       child: Column(
                         children: [
                           Text(
-                            'Study Smarter. Score Higher.',
+                            'Your AI Study Companion.',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 22,
@@ -208,9 +208,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'AI-powered exam prep for students worldwide.\nFree to start. No credit card needed.',
+                            'Flashcards, AI tutor, exam prep, games & more —\neverything a student needs, in one app.',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
+                              color: Colors.white.withValues(alpha: 0.6),
                               fontSize: 14,
                               height: 1.6,
                               letterSpacing: 0.1,
@@ -239,11 +239,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         children: const [
                           _FeaturePill(
                             icon: Icons.auto_awesome_rounded,
-                            label: 'AI Tutor',
+                            label: 'Sage AI Tutor',
+                          ),
+                          _FeaturePill(
+                            icon: Icons.style_rounded,
+                            label: 'Flashcards',
                           ),
                           _FeaturePill(
                             icon: Icons.public_rounded,
-                            label: '100+ Exams',
+                            label: '150+ Exams',
+                          ),
+                          _FeaturePill(
+                            icon: Icons.sports_esports_rounded,
+                            label: 'Study Games',
                           ),
                           _FeaturePill(
                             icon: Icons.wifi_off_rounded,
@@ -254,8 +262,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             label: '50+ Languages',
                           ),
                           _FeaturePill(
-                            icon: Icons.emoji_events_rounded,
-                            label: 'Gamified XP',
+                            icon: Icons.calendar_today_rounded,
+                            label: 'Study Planner',
                           ),
                           _FeaturePill(
                             icon: Icons.lock_open_rounded,
@@ -347,7 +355,7 @@ class _GlowButtonState extends State<_GlowButton>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 blurRadius: 24,
                 spreadRadius: 2,
               ),
@@ -382,19 +390,19 @@ class _FeaturePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
         borderRadius: BorderRadius.circular(100),
-        color: Colors.white.withOpacity(0.07),
+        color: Colors.white.withValues(alpha: 0.07),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white.withOpacity(0.85)),
+          Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.85)),
           const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
+              color: Colors.white.withValues(alpha: 0.85),
               fontSize: 12,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.1,
@@ -423,7 +431,7 @@ class _ParticlePainter extends CustomPainter {
       final y = size.height - (t * (size.height + 40)) + 20;
       final opacity = math.sin(t * math.pi) * p.alpha;
       final paint = Paint()
-        ..color = Colors.white.withOpacity(opacity.clamp(0.0, 1.0))
+        ..color = Colors.white.withValues(alpha: opacity.clamp(0.0, 1.0))
         ..style = PaintingStyle.fill;
       canvas.drawCircle(Offset(x, y), p.radius, paint);
     }
@@ -463,30 +471,44 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
     _Slide(
       icon: Icons.auto_awesome_rounded,
       iconColor: WittColors.accent,
-      title: 'AI-Powered Test Prep',
+      title: 'Meet Sage — Your AI Tutor',
       subtitle:
-          'Adaptive questions, instant explanations, and a personal AI tutor — all in one app.',
+          'Ask anything. Get step-by-step explanations, homework help, quiz generation, and personalised study plans — 24/7.',
+    ),
+    _Slide(
+      icon: Icons.style_rounded,
+      iconColor: WittColors.primary,
+      title: 'Flashcards & Spaced Repetition',
+      subtitle:
+          'Create, import, and share decks. Our SM-2 algorithm shows you cards at the perfect moment for lasting memory.',
+    ),
+    _Slide(
+      icon: Icons.sports_esports_rounded,
+      iconColor: WittColors.success,
+      title: 'Learn Through Play',
+      subtitle:
+          'Word Duel, Quiz Royale, Equation Rush and 6 more games — study without it feeling like studying.',
     ),
     _Slide(
       icon: Icons.public_rounded,
-      iconColor: WittColors.success,
-      title: '100+ Exams Worldwide',
+      iconColor: WittColors.secondary,
+      title: '150+ Exams Worldwide',
       subtitle:
-          'SAT, GRE, WAEC, JAMB, IELTS and more — covering students across every region.',
+          'SAT, GRE, WAEC, JAMB, IELTS, Gaokao and many more — adaptive prep for every student, everywhere.',
+    ),
+    _Slide(
+      icon: Icons.calendar_today_rounded,
+      iconColor: Color(0xFFFF6B35),
+      title: 'Smart Study Planner',
+      subtitle:
+          'Set your exam date and Witt builds a day-by-day schedule, adjusting automatically as you progress.',
     ),
     _Slide(
       icon: Icons.wifi_off_rounded,
-      iconColor: WittColors.secondary,
-      title: 'Learn Anywhere, Even Offline',
+      iconColor: WittColors.textSecondary,
+      title: 'Works Anywhere, Even Offline',
       subtitle:
-          'Download content packs and study without internet — perfect for low-connectivity areas.',
-    ),
-    _Slide(
-      icon: Icons.lock_open_rounded,
-      iconColor: WittColors.primary,
-      title: 'Free to Start',
-      subtitle:
-          'Get started for free with no credit card required. Upgrade when you\'re ready.',
+          'Download content packs and study without internet — built for students in every corner of the world.',
     ),
   ];
 

@@ -158,7 +158,7 @@ class UsageRecord {
     AiFeature.summarize => dailySummarizations < 3,
     AiFeature.transcribe => false, // paid only
     AiFeature.tts => false, // paid only
-    AiFeature.examGenerate => true, // always allowed (pool-limited)
+    AiFeature.examGenerate => false, // paid only
   };
 
   String limitMessage(AiFeature feature) => switch (feature) {
@@ -177,7 +177,8 @@ class UsageRecord {
     AiFeature.transcribe =>
       "Lecture transcription requires Premium. Upgrade to unlock.",
     AiFeature.tts => "Text-to-speech requires Premium. Upgrade to unlock.",
-    AiFeature.examGenerate => '',
+    AiFeature.examGenerate =>
+      'AI exam question generation requires Premium. Upgrade to unlock.',
   };
 
   UsageRecord increment(AiFeature feature) {

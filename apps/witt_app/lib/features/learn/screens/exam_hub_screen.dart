@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:witt_ai/witt_ai.dart';
 import 'package:witt_ui/witt_ui.dart';
 import '../models/exam.dart';
@@ -261,6 +262,20 @@ class ExamHubScreen extends ConsumerWidget {
   ) async {
     final isPaid = ref.read(isPaidUserProvider);
     final usage = ref.read(usageProvider.notifier);
+
+    if (!isPaid) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'AI exam question generation is available on paid plans only.',
+            ),
+          ),
+        );
+        context.push('/onboarding/paywall');
+      }
+      return;
+    }
 
     if (!usage.canUse(AiFeature.examGenerate, isPaid)) {
       if (context.mounted) {

@@ -14,6 +14,9 @@ const _keyTargetScores = 'target_scores';
 const _keyStudyTime = 'study_time';
 const _keySubjects = 'subjects';
 const _keyLearningPrefs = 'learning_prefs';
+const _keyGradeLevels = 'grade_levels';
+const _keyChildSetupType = 'child_setup_type';
+const _keyClassSize = 'class_size';
 const _keyNotificationsEnabled = 'notifications_enabled';
 const _keyBirthYear = 'birth_year';
 
@@ -31,6 +34,9 @@ class OnboardingData {
     this.studyTimeMinutes = 30,
     this.subjects = const [],
     this.learningPrefs = const [],
+    this.gradeLevels = const [],
+    this.childSetupType,
+    this.classSize,
     this.notificationsEnabled = false,
     this.birthYear,
   });
@@ -43,10 +49,13 @@ class OnboardingData {
   final String? country;
   final List<String> selectedExams;
   final Map<String, String> examDates;
-  final Map<String, int> targetScores;
+  final Map<String, double> targetScores;
   final int studyTimeMinutes;
   final List<String> subjects;
   final List<String> learningPrefs;
+  final List<String> gradeLevels;
+  final String? childSetupType;
+  final String? classSize;
   final bool notificationsEnabled;
   final int? birthYear;
 
@@ -59,10 +68,13 @@ class OnboardingData {
     String? country,
     List<String>? selectedExams,
     Map<String, String>? examDates,
-    Map<String, int>? targetScores,
+    Map<String, double>? targetScores,
     int? studyTimeMinutes,
     List<String>? subjects,
     List<String>? learningPrefs,
+    List<String>? gradeLevels,
+    String? childSetupType,
+    String? classSize,
     bool? notificationsEnabled,
     int? birthYear,
   }) {
@@ -79,6 +91,9 @@ class OnboardingData {
       studyTimeMinutes: studyTimeMinutes ?? this.studyTimeMinutes,
       subjects: subjects ?? this.subjects,
       learningPrefs: learningPrefs ?? this.learningPrefs,
+      gradeLevels: gradeLevels ?? this.gradeLevels,
+      childSetupType: childSetupType ?? this.childSetupType,
+      classSize: classSize ?? this.classSize,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       birthYear: birthYear ?? this.birthYear,
     );
@@ -95,6 +110,8 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
   }
 
   OnboardingData _load() {
+    final rawScores =
+        _box.get(_keyTargetScores, defaultValue: <String, dynamic>{}) as Map;
     return OnboardingData(
       isCompleted: _box.get(_keyCompleted, defaultValue: false) as bool,
       currentStep: _box.get(_keyStep, defaultValue: 0) as int,
@@ -108,8 +125,8 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       examDates: Map<String, String>.from(
         _box.get(_keyExamDates, defaultValue: <String, String>{}) as Map,
       ),
-      targetScores: Map<String, int>.from(
-        _box.get(_keyTargetScores, defaultValue: <String, int>{}) as Map,
+      targetScores: rawScores.map(
+        (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
       ),
       studyTimeMinutes: _box.get(_keyStudyTime, defaultValue: 30) as int,
       subjects: List<String>.from(
@@ -118,6 +135,11 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
       learningPrefs: List<String>.from(
         _box.get(_keyLearningPrefs, defaultValue: <String>[]) as List,
       ),
+      gradeLevels: List<String>.from(
+        _box.get(_keyGradeLevels, defaultValue: <String>[]) as List,
+      ),
+      childSetupType: _box.get(_keyChildSetupType) as String?,
+      classSize: _box.get(_keyClassSize) as String?,
       notificationsEnabled:
           _box.get(_keyNotificationsEnabled, defaultValue: false) as bool,
       birthYear: _box.get(_keyBirthYear) as int?,
@@ -137,6 +159,9 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     await _box.put(_keyStudyTime, data.studyTimeMinutes);
     await _box.put(_keySubjects, data.subjects);
     await _box.put(_keyLearningPrefs, data.learningPrefs);
+    await _box.put(_keyGradeLevels, data.gradeLevels);
+    await _box.put(_keyChildSetupType, data.childSetupType);
+    await _box.put(_keyClassSize, data.classSize);
     await _box.put(_keyNotificationsEnabled, data.notificationsEnabled);
     if (data.birthYear != null) await _box.put(_keyBirthYear, data.birthYear);
     state = data;
@@ -166,7 +191,7 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
     await _save(state.copyWith(examDates: dates, currentStep: 6));
   }
 
-  Future<void> setTargetScores(Map<String, int> scores) async {
+  Future<void> setTargetScores(Map<String, double> scores) async {
     await _save(state.copyWith(targetScores: scores, currentStep: 7));
   }
 
@@ -180,6 +205,18 @@ class OnboardingNotifier extends Notifier<OnboardingData> {
 
   Future<void> setLearningPrefs(List<String> prefs) async {
     await _save(state.copyWith(learningPrefs: prefs, currentStep: 10));
+  }
+
+  Future<void> setGradeLevels(List<String> levels) async {
+    await _save(state.copyWith(gradeLevels: levels));
+  }
+
+  Future<void> setChildSetupType(String type) async {
+    await _save(state.copyWith(childSetupType: type));
+  }
+
+  Future<void> setClassSize(String size) async {
+    await _save(state.copyWith(classSize: size));
   }
 
   Future<void> setNotifications(bool enabled) async {

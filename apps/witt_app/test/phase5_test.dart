@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 
 import 'package:witt_app/core/security/privacy_service.dart';
+import 'package:witt_app/features/auth/auth_state.dart';
 import 'package:witt_app/features/onboarding/onboarding_state.dart';
 import 'package:witt_app/core/persistence/hive_boxes.dart';
 
@@ -371,6 +372,7 @@ void main() {
       const trial = Entitlement(
         plan: SubscriptionPlan.premiumMonthly,
         status: SubscriptionStatus.trial,
+        unlockedExamIds: [],
       );
       final active = trial.copyWith(status: SubscriptionStatus.active);
       expect(active.isPremium, isTrue);
@@ -381,6 +383,7 @@ void main() {
       const active = Entitlement(
         plan: SubscriptionPlan.premiumMonthly,
         status: SubscriptionStatus.active,
+        unlockedExamIds: [],
       );
       final expired = active.copyWith(status: SubscriptionStatus.expired);
       expect(expired.isPremium, isFalse);
@@ -390,6 +393,7 @@ void main() {
       const active = Entitlement(
         plan: SubscriptionPlan.premiumYearly,
         status: SubscriptionStatus.active,
+        unlockedExamIds: [],
       );
       final cancelled = active.copyWith(status: SubscriptionStatus.cancelled);
       // Cancelled but in grace period — still has access until period ends
@@ -400,10 +404,12 @@ void main() {
       const monthly = Entitlement(
         plan: SubscriptionPlan.premiumMonthly,
         status: SubscriptionStatus.active,
+        unlockedExamIds: [],
       );
       const yearly = Entitlement(
         plan: SubscriptionPlan.premiumYearly,
         status: SubscriptionStatus.active,
+        unlockedExamIds: [],
       );
       expect(monthly.isPremium, isTrue);
       expect(yearly.isPremium, isTrue);

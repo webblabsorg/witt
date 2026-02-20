@@ -6,6 +6,7 @@ import 'scaffold_with_nav.dart';
 import '../features/onboarding/onboarding_state.dart';
 import '../features/onboarding/screens/splash_screen.dart' show SplashScreen;
 import '../features/onboarding/screens/language_picker_screen.dart';
+import '../features/onboarding/screens/onboarding_intro_screen.dart';
 import '../features/onboarding/screens/wizard_screen.dart';
 import '../features/auth/auth_state.dart';
 import '../features/auth/screens/auth_screen.dart';
@@ -74,6 +75,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding/language',
         builder: (_, __) => const LanguagePickerScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/intro',
+        builder: (_, __) => const OnboardingIntroScreen(),
       ),
       GoRoute(
         path: '/onboarding/wizard/:step',
@@ -234,6 +239,10 @@ bool _requiresAuth(String location) {
   return protected.any((p) => location.startsWith(p));
 }
 
+bool _isAnonymousAllowedRoleDashboard(String location) {
+  return location == '/profile/teacher' || location == '/profile/parent';
+}
+
 /// Routes that require a full (non-anonymous) account.
 /// Anonymous users are prompted to sign up when hitting these.
 bool _requiresFullAuth(String location) {
@@ -286,12 +295,16 @@ String? computeRedirect({
     return '/onboarding/auth?from=$dest';
   }
 
-  if (auth.isAnonymous && _requiresFullAuth(location)) {
+  if (auth.isAnonymous &&
+      _requiresFullAuth(location) &&
+      !_isAnonymousAllowedRoleDashboard(location)) {
     final dest = Uri.encodeComponent(fullUri);
     return '/onboarding/auth?from=$dest';
   }
 
-  if (auth.isAnonymous && _requiresAuth(location)) {
+  if (auth.isAnonymous &&
+      _requiresAuth(location) &&
+      !_isAnonymousAllowedRoleDashboard(location)) {
     final dest = Uri.encodeComponent(fullUri);
     return '/onboarding/auth?from=$dest';
   }

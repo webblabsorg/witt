@@ -129,6 +129,15 @@ class TopicDrillNotifier extends FamilyNotifier<TopicDrillState, String> {
     required bool isPaidUser,
     int count = 10,
   }) {
+    if (!isPaidUser) {
+      state = state.copyWith(
+        sectionId: sectionId,
+        topic: topic,
+        status: DrillStatus.paywalled,
+      );
+      return;
+    }
+
     final proficiency = ref.read(userProficiencyProvider)[arg];
     final attempted = proficiency?.questionsAttempted ?? 0;
 
