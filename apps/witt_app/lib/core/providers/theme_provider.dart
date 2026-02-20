@@ -14,7 +14,13 @@ class ThemeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     _box = Hive.box<dynamic>(_kBoxPrefs);
-    final saved = _box.get(_kKeyTheme, defaultValue: 'system') as String;
+    // Force light mode for US launch — deep white / deep black design.
+    // Ignore any previously persisted dark/system value.
+    final saved = _box.get(_kKeyTheme, defaultValue: 'light') as String;
+    if (saved == 'dark' || saved == 'system') {
+      _box.put(_kKeyTheme, 'light');
+      return ThemeMode.light;
+    }
     return _fromString(saved);
   }
 
@@ -24,16 +30,16 @@ class ThemeNotifier extends Notifier<ThemeMode> {
   }
 
   static ThemeMode _fromString(String s) => switch (s) {
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
-      };
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.light, // default to light
+  };
 
   static String _toString(ThemeMode m) => switch (m) {
-        ThemeMode.light => 'light',
-        ThemeMode.dark => 'dark',
-        _ => 'system',
-      };
+    ThemeMode.light => 'light',
+    ThemeMode.dark => 'dark',
+    _ => 'system',
+  };
 }
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(

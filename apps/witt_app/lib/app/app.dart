@@ -8,7 +8,7 @@ import 'package:witt_monetization/witt_monetization.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import 'router.dart';
-import '../core/providers/theme_provider.dart';
+// import '../core/providers/theme_provider.dart'; // Unused: ThemeMode.light hardcoded for US launch
 import '../core/providers/locale_provider.dart';
 
 class WittApp extends ConsumerStatefulWidget {
@@ -49,15 +49,16 @@ class _WittAppState extends ConsumerState<WittApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
-    final themeMode = ref.watch(themeProvider);
+    // themeMode not watched — forced to light for US launch
     final locale = ref.watch(localeProvider);
 
     final app = MaterialApp.router(
       title: 'Witt',
       debugShowCheckedModeBanner: false,
       theme: WittTheme.light,
-      darkTheme: WittTheme.dark,
-      themeMode: themeMode,
+      darkTheme: WittTheme
+          .light, // Force light — deep white / deep black for US launch
+      themeMode: ThemeMode.light, // Always light regardless of system setting
       locale: locale,
       routerConfig: router,
     );
