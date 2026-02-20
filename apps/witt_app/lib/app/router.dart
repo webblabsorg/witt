@@ -3,7 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'scaffold_with_nav.dart';
-import '../screens/home/home_screen.dart';
+import '../features/onboarding/onboarding_state.dart';
+import '../features/onboarding/screens/splash_screen.dart';
+import '../features/onboarding/screens/language_picker_screen.dart';
+import '../features/onboarding/screens/wizard_screen.dart';
+import '../features/auth/auth_state.dart';
+import '../features/auth/screens/auth_screen.dart';
+import '../features/auth/screens/email_auth_screen.dart';
+import '../features/auth/screens/phone_auth_screen.dart';
+import '../features/paywall/screens/paywall_screen.dart';
+import '../features/paywall/screens/feature_comparison_screen.dart';
+import '../features/paywall/screens/free_trial_screen.dart';
+import '../features/home/screens/home_screen.dart';
 import '../screens/learn/learn_screen.dart';
 import '../screens/sage/sage_screen.dart';
 import '../screens/social/social_screen.dart';
@@ -17,10 +28,75 @@ final _socialNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'social');
 final _profileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'profile');
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final onboarding = ref.watch(onboardingProvider);
+  final auth = ref.watch(authNotifierProvider);
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/home',
+    initialLocation: _initialLocation(onboarding, auth),
+    redirect: (context, state) {
+      final location = state.matchedLocation;
+      final onboardingDone = onboarding.isCompleted;
+
+      // If onboarding not done, keep in onboarding flow
+      if (!onboardingDone) {
+        if (!location.startsWith('/onboarding')) {
+          return '/onboarding/splash';
+        }
+        return null;
+      }
+
+      // If onboarding done but not authed, allow home (anonymous access)
+      // Redirect away from onboarding screens once done
+      if (onboardingDone && location.startsWith('/onboarding')) {
+        return '/home';
+      }
+
+      return null;
+    },
     routes: [
+      // ── Onboarding flow (outside shell) ──────────────────────────────────
+      GoRoute(
+        path: '/onboarding/splash',
+        builder: (_, __) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/language',
+        builder: (_, __) => const LanguagePickerScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/wizard/:step',
+        builder: (_, state) {
+          final step = int.tryParse(state.pathParameters['step'] ?? '1') ?? 1;
+          return WizardScreen(step: step);
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/auth',
+        builder: (_, __) => const AuthScreen(),
+        routes: [
+          GoRoute(path: 'email', builder: (_, __) => const EmailAuthScreen()),
+          GoRoute(
+            path: 'login',
+            builder: (_, __) => const EmailAuthScreen(isLogin: true),
+          ),
+          GoRoute(path: 'phone', builder: (_, __) => const PhoneAuthScreen()),
+        ],
+      ),
+      GoRoute(
+        path: '/onboarding/paywall',
+        builder: (_, __) => const PaywallScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/feature-comparison',
+        builder: (_, __) => const FeatureComparisonScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/free-trial',
+        builder: (_, __) => const FreeTrialScreen(),
+      ),
+
+      // ── Main app shell (5-tab) ────────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNav(navigationShell: navigationShell);
@@ -32,7 +108,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const HomeScreen(),
+                builder: (_, __) => const HomeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'play',
+                    builder: (_, __) =>
+                        const _PlaceholderScreen(title: 'Play Hub'),
+                  ),
+                  GoRoute(
+                    path: 'search',
+                    builder: (_, __) =>
+                        const _PlaceholderScreen(title: 'Search'),
+                  ),
+                  GoRoute(
+                    path: 'notifications',
+                    builder: (_, __) =>
+                        const _PlaceholderScreen(title: 'Notifications'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -40,20 +133,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             navigatorKey: _learnNavigatorKey,
             routes: [
-              GoRoute(
-                path: '/learn',
-                builder: (context, state) => const LearnScreen(),
-              ),
+              GoRoute(path: '/learn', builder: (_, __) => const LearnScreen()),
             ],
           ),
-          // Tab 3: Sage (AI Chat Bot)
+          // Tab 3: Sage
           StatefulShellBranch(
             navigatorKey: _sageNavigatorKey,
             routes: [
-              GoRoute(
-                path: '/sage',
-                builder: (context, state) => const SageScreen(),
-              ),
+              GoRoute(path: '/sage', builder: (_, __) => const SageScreen()),
             ],
           ),
           // Tab 4: Social
@@ -62,7 +149,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/social',
-                builder: (context, state) => const SocialScreen(),
+                builder: (_, __) => const SocialScreen(),
               ),
             ],
           ),
@@ -72,7 +159,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) => const ProfileScreen(),
+                builder: (_, __) => const ProfileScreen(),
               ),
             ],
           ),
@@ -81,3 +168,22 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+String _initialLocation(OnboardingData onboarding, AuthState auth) {
+  if (!onboarding.isCompleted) return '/onboarding/splash';
+  return '/home';
+}
+
+/// Temporary placeholder for routes not yet implemented
+class _PlaceholderScreen extends StatelessWidget {
+  const _PlaceholderScreen({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(child: Text('$title — coming soon')),
+    );
+  }
+}
