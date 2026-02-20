@@ -551,7 +551,7 @@ Phase 5: Polish, Platform & Launch
 
 - [x] **Unit & Widget Tests:** Phase 5 test suite (COPPA, birthYear, monetization, deep-links, performance benchmarks, security API surface)
 
-- [x] **Deep-Link Conformance Tests (§4.4)**
+- [x] **Deep-Link Redirect Logic Tests (§4.4)** — `computeRedirect()` extracted as single source of truth; router closure delegates to it. Covered by `deep_link_integration_test.dart` (25+ pure-Dart tests, no device needed):
   - [x] `witt://home` → Home tab
   - [x] `witt://learn/exam/sat` → SAT Exam Hub (route builds `ExamHubScreen` directly)
   - [x] `witt://sage` → Sage AI tab
@@ -560,10 +560,11 @@ Phase 5: Polish, Platform & Launch
   - [x] `witt://profile` → Profile tab
   - [x] Deep link while unauthenticated → auth screen with `?from=` redirect preservation
   - [x] Deep link while onboarding incomplete → splash with `?from=` redirect preservation
-  - [x] Push notification deep links on cold start — redirect logic tested via `computeRedirect()` in `deep_link_integration_test.dart`
+  - [ ] **Push notification deep links on cold start** *(requires physical device + OneSignal test send — post-launch)*
+  - [ ] **OS-level deep-link dispatch** (Universal Links / App Links / Custom Scheme) *(requires device integration test — post-launch)*
 
-- [x] **User-Flow Conformance Tests** — stub assertions added to `phase5_test.dart` (onboarding, teacher, parent, offline, anonymous→signup, COPPA, deep-link-auth flows). Full Patrol integration tests are post-launch.
-- [x] **Monetization Edge-Case Matrix** — state transition tests added to `phase5_test.dart` (free→trial, trial→active, active→expired, active→cancelled, monthly vs yearly, exam pack unlock, restore on empty history). Full Subrail sandbox tests are post-launch.
+- [x] **User-Flow Conformance Tests (logic stubs)** — state-level assertions in `phase5_test.dart` document expected flows (onboarding, teacher, parent, offline, anonymous→signup, COPPA, deep-link-auth). *(Full Patrol widget/device tests are post-launch)*
+- [x] **Monetization Edge-Case Matrix (model-level)** — Entitlement state-transition tests in `phase5_test.dart` (free→trial, trial→active, active→expired, active→cancelled, monthly vs yearly, exam pack unlock, restore on empty history). *(Full Subrail sandbox receipt-validation tests are post-launch)*
 
 **Done when:** Benchmarks met. Accessibility pass done. Deep-link routes verified. ✅
 

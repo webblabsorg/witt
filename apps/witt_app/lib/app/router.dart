@@ -48,59 +48,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     // Deep link schemes: witt:// and https://witt.app
     // GoRouter handles these automatically via the OS intent/URL handler.
     // Routes below map 1:1 to the spec §4.4 deep-link conformance table.
-    redirect: (context, state) {
-      final location = state.matchedLocation;
-      final onboardingDone = onboarding.isCompleted;
-      final isAuthenticated = auth.isAuthenticated;
-
-      // /community is an alias for /social (deep-link spec §4.4)
-      if (location == '/community') return '/social';
-
-      // If onboarding not done, preserve the intended destination as a query
-      // param so the user lands there after completing onboarding/auth.
-      if (!onboardingDone) {
-        if (!location.startsWith('/onboarding')) {
-          final dest = Uri.encodeComponent(state.uri.toString());
-          return '/onboarding/splash?from=$dest';
-        }
-        return null;
-      }
-
-      // Redirect away from onboarding screens once done
-      if (onboardingDone && location.startsWith('/onboarding')) {
-        // Honour ?from= redirect if present
-        final from = state.uri.queryParameters['from'];
-        if (from != null && from.isNotEmpty) {
-          return Uri.decodeComponent(from);
-        }
-        return '/home';
-      }
-
-      // Auth guard tier 1: completely unauthenticated (no session at all)
-      // → redirect to auth, preserving destination.
-      if (auth.status == AuthStatus.unauthenticated &&
-          _requiresAuth(location)) {
-        final dest = Uri.encodeComponent(state.uri.toString());
-        return '/onboarding/auth?from=$dest';
-      }
-
-      // Auth guard tier 2: anonymous session cannot access account-only routes.
-      if (auth.isAnonymous && _requiresFullAuth(location)) {
-        final dest = Uri.encodeComponent(state.uri.toString());
-        return '/onboarding/auth?from=$dest';
-      }
-
-      // Role-based portal guards
-      final role = onboarding.role;
-      if (location == '/profile/teacher' && role != 'teacher') {
-        return '/profile';
-      }
-      if (location == '/profile/parent' && role != 'parent') {
-        return '/profile';
-      }
-
-      return null;
-    },
+    redirect: (context, state) => computeRedirect(
+      location: state.matchedLocation,
+      fullUri: state.uri.toString(),
+      onboarding: onboarding,
+      auth: auth,
+      queryParameters: state.uri.queryParameters,
+    ),
     routes: [
       // ── Onboarding flow (outside shell) ──────────────────────────────────
       GoRoute(
