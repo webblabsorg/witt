@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'bootstrap.dart';
 import 'scaffold_with_nav.dart';
 import '../features/onboarding/onboarding_state.dart';
-import '../features/onboarding/screens/splash_screen.dart'
-    show SplashScreen, OnboardingCarouselScreen;
+import '../features/onboarding/screens/splash_screen.dart' show SplashScreen;
 import '../features/onboarding/screens/language_picker_screen.dart';
 import '../features/onboarding/screens/wizard_screen.dart';
 import '../features/auth/auth_state.dart';
@@ -70,7 +69,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/onboarding/carousel',
-        builder: (_, __) => const OnboardingCarouselScreen(),
+        redirect: (_, __) => '/onboarding/language',
       ),
       GoRoute(
         path: '/onboarding/language',
@@ -256,8 +255,10 @@ String? computeRedirect({
   required AuthState auth,
   Map<String, String> queryParameters = const {},
 }) {
-  final isFullySignedIn = auth.status == AuthStatus.authenticated;
-  final onboardingDone = onboarding.isCompleted && isFullySignedIn;
+  final isSignedIn =
+      auth.status == AuthStatus.authenticated ||
+      auth.status == AuthStatus.anonymous;
+  final onboardingDone = onboarding.isCompleted && isSignedIn;
 
   if (location == '/community') return '/social';
 
@@ -286,6 +287,11 @@ String? computeRedirect({
   }
 
   if (auth.isAnonymous && _requiresFullAuth(location)) {
+    final dest = Uri.encodeComponent(fullUri);
+    return '/onboarding/auth?from=$dest';
+  }
+
+  if (auth.isAnonymous && _requiresAuth(location)) {
     final dest = Uri.encodeComponent(fullUri);
     return '/onboarding/auth?from=$dest';
   }

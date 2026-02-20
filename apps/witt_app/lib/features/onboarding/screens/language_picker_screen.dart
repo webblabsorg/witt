@@ -23,7 +23,15 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
   @override
   void initState() {
     super.initState();
-    _selected = ref.read(onboardingProvider).language;
+    // Prefer the persisted locale (source of truth for current app language);
+    // fall back to onboarding language if locale not yet set.
+    final localeCode = ref.read(localeProvider).languageCode;
+    final onboardingLang = ref.read(onboardingProvider).language;
+    // Match locale code against picker list; fall back to onboarding language.
+    final matchedByLocale = _languages.any(
+      (l) => l.code == localeCode || l.code.split('-').first == localeCode,
+    );
+    _selected = matchedByLocale ? localeCode : onboardingLang;
   }
 
   static final _languages = mlKitLanguages

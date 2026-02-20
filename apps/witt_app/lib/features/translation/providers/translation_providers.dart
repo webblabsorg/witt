@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/translation_models.dart';
 import '../../../core/persistence/hive_boxes.dart';
 import '../../../core/analytics/analytics.dart';
+import '../../../core/providers/locale_provider.dart';
 import '../../../core/translation/ml_kit_languages.dart';
 import '../../../core/translation/ml_kit_translate_client.dart';
 import '../../onboarding/onboarding_state.dart';
@@ -41,8 +42,15 @@ class TranslationNotifier extends Notifier<TranslationState> {
       _inputDebounce?.cancel();
     });
 
-    final preferredLang = ref.watch(onboardingProvider).language;
-    final preferredTarget = _isSupported(preferredLang) ? preferredLang : 'en';
+    // Prefer the app locale (set by language picker or settings);
+    // fall back to onboarding language; then 'en' if neither is supported.
+    final localeCode = ref.watch(localeProvider).languageCode;
+    final onboardingLang = ref.watch(onboardingProvider).language;
+    final preferredTarget = _isSupported(localeCode)
+        ? localeCode
+        : _isSupported(onboardingLang)
+        ? onboardingLang
+        : 'en';
 
     final srcLang =
         translationBox.get(kKeyLastSourceLang, defaultValue: 'en') as String;

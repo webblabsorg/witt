@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../auth/auth_state.dart';
+import '../onboarding_state.dart';
 
 // ── Splash Screen ───────────────────────────────────────────────────────────
 
@@ -38,9 +39,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   String _nextRoute() {
     final auth = ref.read(authNotifierProvider);
-    return auth.status == AuthStatus.authenticated
-        ? '/home'
-        : '/onboarding/language';
+    final onboarding = ref.read(onboardingProvider);
+    final isSignedIn =
+        auth.status == AuthStatus.authenticated ||
+        auth.status == AuthStatus.anonymous;
+    if (isSignedIn && onboarding.isCompleted) return '/home';
+    if (auth.status == AuthStatus.authenticated && !onboarding.isCompleted) {
+      // Returning authenticated user who never finished paywall — auto-complete
+      // so they don't re-run the full wizard every time.
+      ref.read(onboardingProvider.notifier).complete();
+      return '/home';
+    }
+    return '/onboarding/language';
   }
 
   @override

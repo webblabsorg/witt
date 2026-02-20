@@ -83,9 +83,6 @@ Output: build/windows/x64/runner/Release/witt_app.exe
 ### 5. Store submissions
 Follow docs/runbook.md §Store Submission checklist for each platform.
 
-### 6. Translation VPS setup
-Provide SSH details to begin Session L1 from docs/lang-setup.md.
-
 ---
 
 
@@ -184,4 +181,4 @@ These **cannot** be automated — they require your accounts/devices:
 5. **Store submissions** — see `docs/runbook.md` §Store Submission
 6. **Push notification cold-start test** — send a test push from OneSignal dashboard with a deep-link payload
 7. **Subrail sandbox receipt test** — requires sandbox IAP purchase on device
-8. **Translation VPS** — provide SSH details to begin Session L1 from `docs/lang-setup.md`
+8. **Subrail sandbox receipt test** — requires sandbox IAP purchase on device (duplicate removed)

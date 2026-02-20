@@ -206,55 +206,60 @@ void main() {
   // ── 5. Auth guard tier 2 — anonymous ────────────────────────────────────
 
   group('Deep link — anonymous startup flow', () {
-    test('/profile blocked for anonymous (full-auth-only)', () {
+    test('/profile blocked for anonymous (full-auth-only) → auth screen', () {
       final result = computeRedirect(
         location: '/profile',
         fullUri: '/profile',
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, startsWith('/onboarding/splash?from='));
+      // onboardingDone=true for anonymous+completed, so hits auth guard
+      expect(result, startsWith('/onboarding/auth?from='));
     });
 
-    test('/sage blocked for anonymous (full-auth-only)', () {
+    test('/sage blocked for anonymous (full-auth-only) → auth screen', () {
       final result = computeRedirect(
         location: '/sage',
         fullUri: '/sage',
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, startsWith('/onboarding/splash?from='));
+      expect(result, startsWith('/onboarding/auth?from='));
     });
 
-    test('/social goes to onboarding splash for anonymous', () {
+    test('/social blocked for anonymous → auth screen', () {
       final result = computeRedirect(
         location: '/social',
         fullUri: '/social',
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, startsWith('/onboarding/splash?from='));
+      expect(result, startsWith('/onboarding/auth?from='));
     });
 
-    test('/learn/exam/sat goes to onboarding splash for anonymous', () {
+    test('/learn/exam/sat blocked for anonymous → auth screen', () {
       final result = computeRedirect(
         location: '/learn/exam/sat',
         fullUri: '/learn/exam/sat',
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, startsWith('/onboarding/splash?from='));
+      expect(result, startsWith('/onboarding/auth?from='));
     });
 
-    test('/home goes to onboarding splash for anonymous', () {
-      final result = computeRedirect(
-        location: '/home',
-        fullUri: '/home',
-        onboarding: _onboardingComplete,
-        auth: _anonymous,
-      );
-      expect(result, startsWith('/onboarding/splash?from='));
-    });
+    test(
+      '/home passes through for anonymous+completed (onboardingDone=true)',
+      () {
+        final result = computeRedirect(
+          location: '/home',
+          fullUri: '/home',
+          onboarding: _onboardingComplete,
+          auth: _anonymous,
+        );
+        // anonymous+completed is treated as onboardingDone — /home is unprotected
+        expect(result, isNull);
+      },
+    );
   });
 
   // ── 6. Authenticated — no redirects ─────────────────────────────────────
