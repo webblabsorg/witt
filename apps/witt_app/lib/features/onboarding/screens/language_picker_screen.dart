@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../../core/providers/locale_provider.dart';
+import '../../../core/translation/ml_kit_languages.dart';
 import '../onboarding_state.dart';
 
 class LanguagePickerScreen extends ConsumerStatefulWidget {
@@ -25,29 +26,12 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
     _selected = ref.read(onboardingProvider).language;
   }
 
-  static const _languages = [
-    _Language('en', '🇺🇸', 'English (US)', 'English'),
-    _Language('en-GB', '🇬🇧', 'English (UK)', 'English'),
-    _Language('es', '🇪🇸', 'Español', 'Spanish'),
-    _Language('fr', '🇫🇷', 'Français', 'French'),
-    _Language('de', '🇩🇪', 'Deutsch', 'German'),
-    _Language('pt', '🇵🇹', 'Português', 'Portuguese'),
-    _Language('it', '🇮🇹', 'Italiano', 'Italian'),
-    _Language('nl', '🇳🇱', 'Nederlands', 'Dutch'),
-    _Language('ru', '🇷🇺', 'Русский', 'Russian'),
-    _Language('pl', '🇵🇱', 'Polski', 'Polish'),
-    _Language('tr', '🇹🇷', 'Türkçe', 'Turkish'),
-    _Language('ar', '🇸🇦', 'العربية', 'Arabic'),
-    _Language('hi', '🇮🇳', 'हिन्दी', 'Hindi'),
-    _Language('bn', '🇧🇩', 'বাংলা', 'Bengali'),
-    _Language('zh-CN', '🇨🇳', '中文（简体）', 'Chinese Simplified'),
-    _Language('zh-TW', '🇹🇼', '中文（繁體）', 'Chinese Traditional'),
-    _Language('ja', '🇯🇵', '日本語', 'Japanese'),
-    _Language('ko', '🇰🇷', '한국어', 'Korean'),
-    _Language('id', '🇮🇩', 'Bahasa Indonesia', 'Indonesian'),
-    _Language('vi', '🇻🇳', 'Tiếng Việt', 'Vietnamese'),
-    _Language('sw', '🇰🇪', 'Kiswahili', 'Swahili'),
-  ];
+  static final _languages = mlKitLanguages
+      .map(
+        (lang) =>
+            _Language(lang.code, lang.flag, lang.nativeName, lang.englishName),
+      )
+      .toList(growable: false);
 
   @override
   Widget build(BuildContext context) {

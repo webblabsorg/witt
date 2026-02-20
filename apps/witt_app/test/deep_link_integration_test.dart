@@ -126,7 +126,7 @@ void main() {
       expect(result, equals('/sage'));
     });
 
-    test('/onboarding/splash?from=/learn/exam/gre redirects correctly', () {
+    test('/onboarding/splash stays on splash for authenticated users', () {
       final result = computeRedirect(
         location: '/onboarding/splash',
         fullUri: '/onboarding/splash?from=%2Flearn%2Fexam%2Fgre',
@@ -134,78 +134,78 @@ void main() {
         auth: _authenticated,
         queryParameters: {'from': '%2Flearn%2Fexam%2Fgre'},
       );
-      expect(result, equals('/learn/exam/gre'));
+      expect(result, isNull);
     });
   });
 
   // ── 4. Auth guard tier 1 — unauthenticated ──────────────────────────────
 
-  group('Deep link — unauthenticated auth guard', () {
-    test('/profile blocked for unauthenticated, preserves destination', () {
+  group('Deep link — unauthenticated startup flow', () {
+    test('/profile goes to onboarding splash first, preserves destination', () {
       final result = computeRedirect(
         location: '/profile',
         fullUri: '/profile',
         onboarding: _onboardingComplete,
         auth: _unauthenticated,
       );
-      expect(result, startsWith('/onboarding/auth?from='));
+      expect(result, startsWith('/onboarding/splash?from='));
       expect(result, contains(Uri.encodeComponent('/profile')));
     });
 
-    test('/sage blocked for unauthenticated', () {
+    test('/sage goes to onboarding splash first', () {
       final result = computeRedirect(
         location: '/sage',
         fullUri: '/sage',
         onboarding: _onboardingComplete,
         auth: _unauthenticated,
       );
-      expect(result, startsWith('/onboarding/auth?from='));
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
-    test('/social blocked for unauthenticated', () {
+    test('/social goes to onboarding splash first', () {
       final result = computeRedirect(
         location: '/social',
         fullUri: '/social',
         onboarding: _onboardingComplete,
         auth: _unauthenticated,
       );
-      expect(result, startsWith('/onboarding/auth?from='));
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
-    test('/learn/exam/sat blocked for unauthenticated', () {
+    test('/learn/exam/sat goes to onboarding splash first', () {
       final result = computeRedirect(
         location: '/learn/exam/sat',
         fullUri: '/learn/exam/sat',
         onboarding: _onboardingComplete,
         auth: _unauthenticated,
       );
-      expect(result, startsWith('/onboarding/auth?from='));
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
-    test('/home passes through for unauthenticated (not protected)', () {
+    test('/home goes to onboarding splash first', () {
       final result = computeRedirect(
         location: '/home',
         fullUri: '/home',
         onboarding: _onboardingComplete,
         auth: _unauthenticated,
       );
-      expect(result, isNull);
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
-    test('/learn passes through for unauthenticated (not protected)', () {
+    test('/learn goes to onboarding splash first', () {
       final result = computeRedirect(
         location: '/learn',
         fullUri: '/learn',
         onboarding: _onboardingComplete,
         auth: _unauthenticated,
       );
-      expect(result, isNull);
+      expect(result, startsWith('/onboarding/splash?from='));
     });
   });
 
   // ── 5. Auth guard tier 2 — anonymous ────────────────────────────────────
 
-  group('Deep link — anonymous auth guard', () {
+  group('Deep link — anonymous startup flow', () {
     test('/profile blocked for anonymous (full-auth-only)', () {
       final result = computeRedirect(
         location: '/profile',
@@ -213,7 +213,7 @@ void main() {
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, startsWith('/onboarding/auth?from='));
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
     test('/sage blocked for anonymous (full-auth-only)', () {
@@ -223,37 +223,37 @@ void main() {
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, startsWith('/onboarding/auth?from='));
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
-    test('/social passes through for anonymous (not full-auth-only)', () {
+    test('/social goes to onboarding splash for anonymous', () {
       final result = computeRedirect(
         location: '/social',
         fullUri: '/social',
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, isNull);
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
-    test('/learn/exam/sat passes through for anonymous', () {
+    test('/learn/exam/sat goes to onboarding splash for anonymous', () {
       final result = computeRedirect(
         location: '/learn/exam/sat',
         fullUri: '/learn/exam/sat',
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, isNull);
+      expect(result, startsWith('/onboarding/splash?from='));
     });
 
-    test('/home passes through for anonymous', () {
+    test('/home goes to onboarding splash for anonymous', () {
       final result = computeRedirect(
         location: '/home',
         fullUri: '/home',
         onboarding: _onboardingComplete,
         auth: _anonymous,
       );
-      expect(result, isNull);
+      expect(result, startsWith('/onboarding/splash?from='));
     });
   });
 
@@ -346,8 +346,8 @@ void main() {
           onboarding: _onboardingComplete,
           auth: _unauthenticated,
         );
-        // Should redirect to auth with preserved destination
-        expect(result, startsWith('/onboarding/auth?from='));
+        // Should redirect to splash first with preserved destination
+        expect(result, startsWith('/onboarding/splash?from='));
         expect(result, contains(Uri.encodeComponent('/sage')));
       },
     );

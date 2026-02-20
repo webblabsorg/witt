@@ -226,8 +226,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 String _initialLocation(OnboardingData onboarding, AuthState auth) {
-  if (!onboarding.isCompleted) return '/onboarding/splash';
-  return '/home';
+  return '/onboarding/splash';
 }
 
 /// Routes that require at least an anonymous session (no bare unauthenticated).
@@ -257,7 +256,8 @@ String? computeRedirect({
   required AuthState auth,
   Map<String, String> queryParameters = const {},
 }) {
-  final onboardingDone = onboarding.isCompleted;
+  final isFullySignedIn = auth.status == AuthStatus.authenticated;
+  final onboardingDone = onboarding.isCompleted && isFullySignedIn;
 
   if (location == '/community') return '/social';
 
@@ -270,6 +270,9 @@ String? computeRedirect({
   }
 
   if (onboardingDone && location.startsWith('/onboarding')) {
+    if (location == '/onboarding/splash') {
+      return null;
+    }
     final from = queryParameters['from'];
     if (from != null && from.isNotEmpty) {
       return Uri.decodeComponent(from);

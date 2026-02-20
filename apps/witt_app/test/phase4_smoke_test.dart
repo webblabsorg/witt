@@ -38,6 +38,7 @@ late Directory _hiveDir;
 Future<void> _initHive() async {
   _hiveDir = await Directory.systemTemp.createTemp('hive_test_');
   Hive.init(_hiveDir.path);
+  await openOnboardingBox();
   await openPersistenceBoxes();
   await Hive.openBox<dynamic>('app_prefs');
 }
@@ -199,9 +200,9 @@ void main() {
   // ── Translation: language selection ──────────────────────────────────────
 
   group('Translation — language selection', () {
-    test('supported languages list has 19 entries', () {
+    test('supported languages list has 59 entries', () {
       final c = _container();
-      expect(c.read(supportedLanguagesProvider).length, 19);
+      expect(c.read(supportedLanguagesProvider).length, 59);
     });
 
     test('setSourceLang updates state', () {

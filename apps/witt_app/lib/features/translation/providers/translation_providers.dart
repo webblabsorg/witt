@@ -4,146 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/translation_models.dart';
 import '../../../core/persistence/hive_boxes.dart';
 import '../../../core/analytics/analytics.dart';
-import '../../../core/providers/locale_provider.dart';
+import '../../../core/translation/ml_kit_languages.dart';
 import '../../../core/translation/ml_kit_translate_client.dart';
+import '../../onboarding/onboarding_state.dart';
 
 // ── Supported languages ───────────────────────────────────────────────────
 
-const supportedLanguages = [
-  SupportedLanguage(
-    code: 'en',
-    name: 'English',
-    nativeName: 'English',
-    flag: '🇬🇧',
-    isOfflineAvailable: true,
-  ),
-  SupportedLanguage(
-    code: 'fr',
-    name: 'French',
-    nativeName: 'Français',
-    flag: '🇫🇷',
-    isOfflineAvailable: true,
-  ),
-  SupportedLanguage(
-    code: 'es',
-    name: 'Spanish',
-    nativeName: 'Español',
-    flag: '🇪🇸',
-    isOfflineAvailable: true,
-  ),
-  SupportedLanguage(
-    code: 'ar',
-    name: 'Arabic',
-    nativeName: 'العربية',
-    flag: '🇸🇦',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'zh',
-    name: 'Chinese',
-    nativeName: '中文',
-    flag: '🇨🇳',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'hi',
-    name: 'Hindi',
-    nativeName: 'हिन्दी',
-    flag: '🇮🇳',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'pt',
-    name: 'Portuguese',
-    nativeName: 'Português',
-    flag: '🇧🇷',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'it',
-    name: 'Italian',
-    nativeName: 'Italiano',
-    flag: '🇮🇹',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'nl',
-    name: 'Dutch',
-    nativeName: 'Nederlands',
-    flag: '🇳🇱',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'ru',
-    name: 'Russian',
-    nativeName: 'Русский',
-    flag: '🇷🇺',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'pl',
-    name: 'Polish',
-    nativeName: 'Polski',
-    flag: '🇵🇱',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'tr',
-    name: 'Turkish',
-    nativeName: 'Türkçe',
-    flag: '🇹🇷',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'sw',
-    name: 'Swahili',
-    nativeName: 'Kiswahili',
-    flag: '🇰🇪',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'bn',
-    name: 'Bengali',
-    nativeName: 'বাংলা',
-    flag: '🇧🇩',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'id',
-    name: 'Indonesian',
-    nativeName: 'Bahasa Indonesia',
-    flag: '🇮🇩',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'vi',
-    name: 'Vietnamese',
-    nativeName: 'Tiếng Việt',
-    flag: '🇻🇳',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'de',
-    name: 'German',
-    nativeName: 'Deutsch',
-    flag: '🇩🇪',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'ja',
-    name: 'Japanese',
-    nativeName: '日本語',
-    flag: '🇯🇵',
-    isOfflineAvailable: false,
-  ),
-  SupportedLanguage(
-    code: 'ko',
-    name: 'Korean',
-    nativeName: '한국어',
-    flag: '🇰🇷',
-    isOfflineAvailable: false,
-  ),
-];
+final supportedLanguages = mlKitLanguages
+    .map(
+      (lang) => SupportedLanguage(
+        code: lang.code,
+        name: lang.englishName,
+        nativeName: lang.nativeName,
+        flag: lang.flag,
+        isOfflineAvailable: true,
+      ),
+    )
+    .toList(growable: false);
 
 final supportedLanguagesProvider = Provider<List<SupportedLanguage>>(
   (_) => supportedLanguages,
@@ -164,10 +41,8 @@ class TranslationNotifier extends Notifier<TranslationState> {
       _inputDebounce?.cancel();
     });
 
-    final preferredLocale = ref.watch(localeProvider).languageCode;
-    final preferredTarget = _isSupported(preferredLocale)
-        ? preferredLocale
-        : 'en';
+    final preferredLang = ref.watch(onboardingProvider).language;
+    final preferredTarget = _isSupported(preferredLang) ? preferredLang : 'en';
 
     final srcLang =
         translationBox.get(kKeyLastSourceLang, defaultValue: 'en') as String;

@@ -2,19 +2,22 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
+import '../../auth/auth_state.dart';
+
 // ── Splash Screen ───────────────────────────────────────────────────────────
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   late final AnimationController _master;
   late final AnimationController _pulse;
@@ -32,6 +35,13 @@ class _SplashScreenState extends State<SplashScreen>
   late final Animation<double> _glowPulse;
 
   static const _totalMs = 4500;
+
+  String _nextRoute() {
+    final auth = ref.read(authNotifierProvider);
+    return auth.status == AuthStatus.authenticated
+        ? '/home'
+        : '/onboarding/language';
+  }
 
   @override
   void initState() {
@@ -76,6 +86,11 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
 
     _master.forward();
+
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (!mounted) return;
+      context.go(_nextRoute());
+    });
   }
 
   Animation<double> _curved(double start, double end, Curve curve) =>
@@ -253,7 +268,7 @@ class _SplashScreenState extends State<SplashScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: _GlowButton(
                         label: 'Get Started — It\'s Free',
-                        onTap: () => context.go('/onboarding/carousel'),
+                        onTap: () => context.go(_nextRoute()),
                       ),
                     ),
                   ),
