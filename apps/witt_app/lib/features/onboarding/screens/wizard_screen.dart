@@ -5,6 +5,7 @@ import 'package:witt_ui/witt_ui.dart';
 
 import '../onboarding_state.dart';
 import '../../../core/security/privacy_service.dart';
+import '../../../core/translation/live_text.dart';
 
 class WizardScreen extends ConsumerStatefulWidget {
   const WizardScreen({super.key, required this.step});
@@ -120,6 +121,13 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final continueLabel =
+        ref.watch(liveTextProvider('Continue')).valueOrNull ?? 'Continue';
+    final enableNotificationsLabel =
+        ref.watch(liveTextProvider('Enable Notifications')).valueOrNull ??
+        'Enable Notifications';
+    final notNowLabel =
+        ref.watch(liveTextProvider('Not now')).valueOrNull ?? 'Not now';
 
     return Scaffold(
       body: SafeArea(
@@ -161,7 +169,13 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: WittSpacing.pagePadding,
-                child: _buildStep(theme, isDark),
+                child: _buildStep(
+                  theme,
+                  isDark,
+                  continueLabel,
+                  enableNotificationsLabel,
+                  notNowLabel,
+                ),
               ),
             ),
           ],
@@ -170,18 +184,24 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     );
   }
 
-  Widget _buildStep(ThemeData theme, bool isDark) {
+  Widget _buildStep(
+    ThemeData theme,
+    bool isDark,
+    String continueLabel,
+    String enableNotificationsLabel,
+    String notNowLabel,
+  ) {
     return switch (widget.step) {
       1 => _buildQ1(theme, isDark),
       2 => _buildQ2(theme, isDark),
       3 => _buildQ3(theme, isDark),
-      4 => _buildQ4(theme, isDark),
-      5 => _buildQ5(theme, isDark),
-      6 => _buildQ6(theme, isDark),
-      7 => _buildQ7(theme, isDark),
-      8 => _buildQ8(theme, isDark),
-      9 => _buildQ9(theme, isDark),
-      10 => _buildQ10(theme, isDark),
+      4 => _buildQ4(theme, isDark, continueLabel),
+      5 => _buildQ5(theme, isDark, continueLabel),
+      6 => _buildQ6(theme, isDark, continueLabel),
+      7 => _buildQ7(theme, isDark, continueLabel),
+      8 => _buildQ8(theme, isDark, continueLabel),
+      9 => _buildQ9(theme, isDark, continueLabel),
+      10 => _buildQ10(theme, isDark, enableNotificationsLabel, notNowLabel),
       _ => const SizedBox.shrink(),
     };
   }
@@ -221,7 +241,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
                   children: [
                     Text(r.emoji, style: const TextStyle(fontSize: 32)),
                     const SizedBox(width: WittSpacing.lg),
-                    Text(r.label, style: theme.textTheme.titleMedium),
+                    LiveText(r.label, style: theme.textTheme.titleMedium),
                     const Spacer(),
                     if (isSelected)
                       const Icon(
@@ -271,7 +291,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('What year were you born?'),
+          title: const LiveText('What year were you born?'),
           content: SizedBox(
             height: 200,
             child: ListWheelScrollView.useDelegate(
@@ -310,11 +330,11 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: const LiveText('Cancel'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, selectedYear),
-              child: const Text('Continue'),
+              child: const LiveText('Continue'),
             ),
           ],
         ),
@@ -460,7 +480,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   // Q4: Exams
-  Widget _buildQ4(ThemeData theme, bool isDark) {
+  Widget _buildQ4(ThemeData theme, bool isDark, String continueLabel) {
     return _StepWrapper(
       title: 'What are you preparing for?',
       subtitle: 'Select one or more exams.',
@@ -489,7 +509,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           ),
           const SizedBox(height: WittSpacing.xxxl),
           WittButton(
-            label: 'Continue',
+            label: continueLabel,
             onPressed: _selectedExams.isEmpty
                 ? null
                 : () async {
@@ -507,7 +527,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   // Q5: Exam dates
-  Widget _buildQ5(ThemeData theme, bool isDark) {
+  Widget _buildQ5(ThemeData theme, bool isDark, String continueLabel) {
     final exams = ref.read(onboardingProvider).selectedExams;
     return _StepWrapper(
       title: 'When is your exam?',
@@ -569,7 +589,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           }),
           const SizedBox(height: WittSpacing.lg),
           WittButton(
-            label: 'Continue',
+            label: continueLabel,
             onPressed: _next,
             isFullWidth: true,
             size: WittButtonSize.lg,
@@ -580,7 +600,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   // Q6: Target scores
-  Widget _buildQ6(ThemeData theme, bool isDark) {
+  Widget _buildQ6(ThemeData theme, bool isDark, String continueLabel) {
     final exams = ref.read(onboardingProvider).selectedExams;
     return _StepWrapper(
       title: "What's your target score?",
@@ -633,7 +653,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           }),
           const SizedBox(height: WittSpacing.lg),
           WittButton(
-            label: 'Continue',
+            label: continueLabel,
             onPressed: _next,
             isFullWidth: true,
             size: WittButtonSize.lg,
@@ -654,7 +674,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   };
 
   // Q7: Study time
-  Widget _buildQ7(ThemeData theme, bool isDark) {
+  Widget _buildQ7(ThemeData theme, bool isDark, String continueLabel) {
     return _StepWrapper(
       title: 'How much time can you study daily?',
       child: Column(
@@ -715,7 +735,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   // Q8: Subjects
-  Widget _buildQ8(ThemeData theme, bool isDark) {
+  Widget _buildQ8(ThemeData theme, bool isDark, String continueLabel) {
     return _StepWrapper(
       title: 'What subjects do you want to focus on?',
       child: Column(
@@ -741,7 +761,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           }),
           const SizedBox(height: WittSpacing.xxl),
           WittButton(
-            label: 'Continue',
+            label: continueLabel,
             onPressed: () async {
               await ref
                   .read(onboardingProvider.notifier)
@@ -757,7 +777,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   // Q9: Learning preferences
-  Widget _buildQ9(ThemeData theme, bool isDark) {
+  Widget _buildQ9(ThemeData theme, bool isDark, String continueLabel) {
     return _StepWrapper(
       title: 'How do you like to learn?',
       subtitle: 'Select all that apply. Optional.',
@@ -813,7 +833,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           ),
           const SizedBox(height: WittSpacing.xxxl),
           WittButton(
-            label: 'Continue',
+            label: continueLabel,
             onPressed: () async {
               await ref
                   .read(onboardingProvider.notifier)
@@ -829,7 +849,12 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   // Q10: Notifications
-  Widget _buildQ10(ThemeData theme, bool isDark) {
+  Widget _buildQ10(
+    ThemeData theme,
+    bool isDark,
+    String enableNotificationsLabel,
+    String notNowLabel,
+  ) {
     return _StepWrapper(
       title: 'Enable notifications?',
       subtitle: 'Stay on track with reminders and alerts.',
@@ -870,7 +895,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           ),
           const SizedBox(height: WittSpacing.xxxl),
           WittButton(
-            label: 'Enable Notifications',
+            label: enableNotificationsLabel,
             onPressed: () async {
               await ref
                   .read(onboardingProvider.notifier)
@@ -882,7 +907,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
           ),
           const SizedBox(height: WittSpacing.md),
           WittButton(
-            label: 'Not now',
+            label: notNowLabel,
             variant: WittButtonVariant.ghost,
             onPressed: () async {
               await ref
@@ -914,10 +939,10 @@ class _StepWrapper extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: WittSpacing.lg),
-        Text(title, style: theme.textTheme.headlineSmall),
+        LiveText(title, style: theme.textTheme.headlineSmall),
         if (subtitle != null) ...[
           const SizedBox(height: WittSpacing.sm),
-          Text(
+          LiveText(
             subtitle!,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: isDark
@@ -956,8 +981,8 @@ class _CoppaConsentDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Parental Consent Required'),
-      content: const Text(
+      title: const LiveText('Parental Consent Required'),
+      content: const LiveText(
         'Witt collects personal data to personalise your learning experience. '
         'Because you may be under 13, we need a parent or guardian to confirm '
         'they consent to your use of this app and the collection of your data '
@@ -967,11 +992,11 @@ class _CoppaConsentDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: const LiveText('Cancel'),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('I Consent (Parent/Guardian)'),
+          child: const LiveText('I Consent (Parent/Guardian)'),
         ),
       ],
     );
@@ -1009,8 +1034,8 @@ class _NotifRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: theme.textTheme.titleSmall),
-              Text(subtitle, style: theme.textTheme.bodySmall),
+              LiveText(label, style: theme.textTheme.titleSmall),
+              LiveText(subtitle, style: theme.textTheme.bodySmall),
             ],
           ),
         ),

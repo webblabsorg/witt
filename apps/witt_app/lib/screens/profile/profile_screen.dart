@@ -500,7 +500,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: appLocales.map((l) {
                   final selected = l.code == current;
                   return ListTile(
-                    leading: Text(l.flag, style: const TextStyle(fontSize: 22)),
                     title: Text(l.name),
                     trailing: selected
                         ? const Icon(

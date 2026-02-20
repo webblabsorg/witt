@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../../core/providers/locale_provider.dart';
+import '../../../core/translation/live_text.dart';
 import '../../../core/translation/ml_kit_languages.dart';
 import '../onboarding_state.dart';
 
@@ -17,6 +18,24 @@ class LanguagePickerScreen extends ConsumerStatefulWidget {
 
 class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
   String _selected = 'en';
+
+  static const _preferredOrder = <String>[
+    'en',
+    'es',
+    'fr',
+    'ar',
+    'pt',
+    'hi',
+    'zh',
+    'ru',
+    'de',
+    'ja',
+    'ko',
+    'sw',
+    'bn',
+    'tr',
+    'it',
+  ];
 
   String _toLocaleCode(String code) => code.split('-').first;
 
@@ -34,17 +53,34 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
     _selected = matchedByLocale ? localeCode : onboardingLang;
   }
 
-  static final _languages = mlKitLanguages
-      .map(
-        (lang) =>
-            _Language(lang.code, lang.flag, lang.nativeName, lang.englishName),
-      )
-      .toList(growable: false);
+  static final _languages = () {
+    final ranked = mlKitLanguages
+        .map(
+          (lang) => _Language(
+            lang.code,
+            lang.code == 'en' ? 'English' : lang.nativeName,
+            lang.code == 'en' ? 'English' : lang.englishName,
+          ),
+        )
+        .toList(growable: false);
+
+    ranked.sort((a, b) {
+      final aRank = _preferredOrder.indexOf(a.code);
+      final bRank = _preferredOrder.indexOf(b.code);
+      final aIdx = aRank == -1 ? 999 : aRank;
+      final bIdx = bRank == -1 ? 999 : bRank;
+      if (aIdx != bIdx) return aIdx.compareTo(bIdx);
+      return a.englishName.compareTo(b.englishName);
+    });
+    return ranked;
+  }();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final continueLabel =
+        ref.watch(liveTextProvider('Continue')).valueOrNull ?? 'Continue';
 
     return Scaffold(
       body: SafeArea(
@@ -61,12 +97,12 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  LiveText(
                     'Choose your language',
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(height: WittSpacing.sm),
-                  Text(
+                  LiveText(
                     'You can change this later in Settings.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: isDark
@@ -115,8 +151,6 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
                       ),
                       child: Row(
                         children: [
-                          Text(lang.flag, style: const TextStyle(fontSize: 24)),
-                          const SizedBox(width: WittSpacing.md),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +191,7 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
                 WittSpacing.xxl,
               ),
               child: WittButton(
-                label: 'Continue',
+                label: continueLabel,
                 onPressed: () async {
                   await ref
                       .read(localeProvider.notifier)
@@ -181,10 +215,9 @@ class _LanguagePickerScreenState extends ConsumerState<LanguagePickerScreen> {
 }
 
 class _Language {
-  const _Language(this.code, this.flag, this.nativeName, this.englishName);
+  const _Language(this.code, this.nativeName, this.englishName);
 
   final String code;
-  final String flag;
   final String nativeName;
   final String englishName;
 }
