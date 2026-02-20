@@ -4,7 +4,7 @@
 
 ## Repository
 
-[https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+[https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 ## Tech Stack
 
@@ -57,7 +57,7 @@ witt/
 
 ```bash
 # Clone
-git clone https://github.com/webblabsorg/wiit.git
+git clone https://github.com/webblabsorg/witt.git
 cd witt
 
 # Bootstrap monorepo

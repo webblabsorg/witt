@@ -4,7 +4,7 @@
 **Date:** February 2026  
 **App Name:** Witt  
 **Tagline:** The AI-Powered Study Companion for Every Student, Everywhere  
-**Repository:** [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+**Repository:** [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 > Witt is a cross-platform AI-powered education super-app designed to help students prepare for standardized tests, master coursework, and build lasting knowledge through adaptive learning, interactive flashcards, AI tutoring, educational games, and comprehensive study planning — with full offline support for students in low-connectivity regions.
 

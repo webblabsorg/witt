@@ -3,7 +3,7 @@
 **Version:** 1.0  
 **Date:** February 2026  
 **Reference:** `docs/main.md`  
-**Repository:** [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)  
+**Repository:** [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)  
 **Methodology:** Sequential phases → sessions → deliverables
 
 > 6 phases, ~30 sessions. Each session = 1–3 days of dev effort with clear deliverables and acceptance criteria.
@@ -87,7 +87,7 @@ Phase 5: Polish, Platform & Launch
 > **Phase 0 — GitHub Push**  
 > Commit all scaffold, schema migrations, CI config, and environment files.  
 > `git add . && git commit -m "phase-0: project scaffold, supabase schema, ci/cd" && git push origin main`  
-> Repo: [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+> Repo: [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 ---
 
@@ -168,7 +168,7 @@ Phase 5: Polish, Platform & Launch
 > **Phase 1 — GitHub Push**  
 > Commit design system, onboarding screens, auth, paywall, and Home tab.  
 > `git add . && git commit -m "phase-1: design system, onboarding, auth, paywall, home tab" && git push origin main`  
-> Repo: [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+> Repo: [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 ---
 
@@ -292,7 +292,7 @@ Phase 5: Polish, Platform & Launch
 > **Phase 2 — GitHub Push**  
 > Commit all core learning modules (M1–M9, M12, M15), question engine, offline sync, and study planner.  
 > `git add . && git commit -m "phase-2: core learning modules, question engine, offline mode, study planner" && git push origin main`  
-> Repo: [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+> Repo: [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 ---
 
@@ -395,7 +395,7 @@ Phase 5: Polish, Platform & Launch
 > **Phase 3 — GitHub Push**  
 > Commit AI routing layer, all AI-wired features, Subrail purchase flows, full exam catalog, and progress dashboard.  
 > `git add . && git commit -m "phase-3: ai routing, groq/openai/claude wiring, subrail purchases, full exam catalog" && git push origin main`  
-> Repo: [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+> Repo: [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 ---
 
@@ -471,7 +471,7 @@ Phase 5: Polish, Platform & Launch
 > **Phase 4 — GitHub Push**  
 > Commit social/community, games, teacher/parent portals, translation system, and profile tab.  
 > `git add . && git commit -m "phase-4: social, games, teacher/parent portals, translation, profile" && git push origin main`  
-> Repo: [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+> Repo: [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 ---
 
@@ -600,7 +600,7 @@ Phase 5: Polish, Platform & Launch
 > **Phase 5 — GitHub Push**  
 > Commit security hardening, platform-specific optimizations, test suite, and final store submission assets. Tag the release.  
 > `git add . && git commit -m "phase-5: security, platform polish, testing, store submission" && git tag v1.0.0 && git push origin main --tags`  
-> Repo: [https://github.com/webblabsorg/wiit](https://github.com/webblabsorg/wiit)
+> Repo: [https://github.com/webblabsorg/witt](https://github.com/webblabsorg/witt)
 
 ---
 
