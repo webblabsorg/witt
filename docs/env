@@ -38,3 +38,5 @@ Configure in Supabase Dashboard → Authentication → Providers:
 - Apple OAuth — requires Apple Developer credentials in Supabase dashboard
 - Phone OTP — requires a Twilio / MessageBird account configured in Supabase dashboard
 - Anonymous — enable toggle in Supabase Dashboard → Authentication → Providers → Anonymous
+
+Open Exchange Rates API: a4e862bb2cc34d35a308b7c5666c20fe

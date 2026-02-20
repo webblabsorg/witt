@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 import '../models/game_models.dart';
+import '../../../core/persistence/hive_boxes.dart';
+import '../../../core/analytics/analytics.dart';
 
 // ── All 9 games catalog ───────────────────────────────────────────────────
 
@@ -148,12 +150,55 @@ final _brainChallenges = [
 // ── Leaderboard data ──────────────────────────────────────────────────────
 
 final _globalLeaderboard = [
-  const LeaderboardEntry(rank: 1, userId: 'u1', name: 'Priya Sharma', avatarInitials: 'PS', score: 98450, country: '🇮🇳'),
-  const LeaderboardEntry(rank: 2, userId: 'u2', name: 'Kwame Mensah', avatarInitials: 'KM', score: 94200, country: '🇬🇭'),
-  const LeaderboardEntry(rank: 3, userId: 'u3', name: 'Sofia Reyes', avatarInitials: 'SR', score: 91800, country: '🇲🇽'),
-  const LeaderboardEntry(rank: 4, userId: 'u4', name: 'Aditya Kumar', avatarInitials: 'AK', score: 87300, country: '🇮🇳'),
-  const LeaderboardEntry(rank: 5, userId: 'u5', name: 'Amara Osei', avatarInitials: 'AO', score: 82100, country: '🇬🇭'),
-  const LeaderboardEntry(rank: 342, userId: 'me', name: 'You', avatarInitials: 'ME', score: 12400, country: '🌍', isCurrentUser: true),
+  const LeaderboardEntry(
+    rank: 1,
+    userId: 'u1',
+    name: 'Priya Sharma',
+    avatarInitials: 'PS',
+    score: 98450,
+    country: '🇮🇳',
+  ),
+  const LeaderboardEntry(
+    rank: 2,
+    userId: 'u2',
+    name: 'Kwame Mensah',
+    avatarInitials: 'KM',
+    score: 94200,
+    country: '🇬🇭',
+  ),
+  const LeaderboardEntry(
+    rank: 3,
+    userId: 'u3',
+    name: 'Sofia Reyes',
+    avatarInitials: 'SR',
+    score: 91800,
+    country: '🇲🇽',
+  ),
+  const LeaderboardEntry(
+    rank: 4,
+    userId: 'u4',
+    name: 'Aditya Kumar',
+    avatarInitials: 'AK',
+    score: 87300,
+    country: '🇮🇳',
+  ),
+  const LeaderboardEntry(
+    rank: 5,
+    userId: 'u5',
+    name: 'Amara Osei',
+    avatarInitials: 'AO',
+    score: 82100,
+    country: '🇬🇭',
+  ),
+  const LeaderboardEntry(
+    rank: 342,
+    userId: 'me',
+    name: 'You',
+    avatarInitials: 'ME',
+    score: 12400,
+    country: '🌍',
+    isCurrentUser: true,
+  ),
 ];
 
 // ── Providers ─────────────────────────────────────────────────────────────
@@ -166,17 +211,31 @@ final gamesProvider = Provider<List<GameDefinition>>((ref) {
 
 final brainChallengesProvider =
     NotifierProvider<BrainChallengesNotifier, List<BrainChallenge>>(
-  BrainChallengesNotifier.new,
-);
+      BrainChallengesNotifier.new,
+    );
 
 class BrainChallengesNotifier extends Notifier<List<BrainChallenge>> {
   @override
-  List<BrainChallenge> build() => _brainChallenges;
+  List<BrainChallenge> build() {
+    final completedIds = Set<String>.from(
+      gamesBox.get(kKeyCompletedChallengeIds, defaultValue: <String>[]) as List,
+    );
+    return _brainChallenges
+        .map((c) => c.copyWith(isCompleted: completedIds.contains(c.id)))
+        .toList();
+  }
 
   void complete(String id) {
+    final challenge = state.firstWhere((c) => c.id == id);
     state = state
         .map((c) => c.id == id ? c.copyWith(isCompleted: true) : c)
         .toList();
+    final completedIds = state
+        .where((c) => c.isCompleted)
+        .map((c) => c.id)
+        .toList();
+    gamesBox.put(kKeyCompletedChallengeIds, completedIds);
+    Analytics.completeChallenge(id, challenge.xpReward);
   }
 }
 
@@ -184,9 +243,21 @@ final leaderboardProvider = Provider<List<LeaderboardEntry>>(
   (_) => _globalLeaderboard,
 );
 
-// ── Daily games played counter (free: 3/day) ──────────────────────────────
+// ── Daily games played counter (free: 3/day, Hive-backed) ────────────────
 
-final gamesPlayedTodayProvider = StateProvider<int>((_) => 0);
+int _todayGamesPlayed() {
+  final today = DateTime.now().toIso8601String().substring(0, 10);
+  final lastReset =
+      gamesBox.get(kKeyGamesLastResetDate, defaultValue: '') as String;
+  if (lastReset != today) {
+    gamesBox.put(kKeyGamesLastResetDate, today);
+    gamesBox.put(kKeyGamesPlayedToday, 0);
+    return 0;
+  }
+  return gamesBox.get(kKeyGamesPlayedToday, defaultValue: 0) as int;
+}
+
+final gamesPlayedTodayProvider = StateProvider<int>((_) => _todayGamesPlayed());
 
 final canPlayGameProvider = Provider<bool>((ref) {
   final isPaid = ref.watch(isPaidProvider);
@@ -197,8 +268,9 @@ final canPlayGameProvider = Provider<bool>((ref) {
 
 // ── Multiplayer status ────────────────────────────────────────────────────
 
-final multiplayerStatusProvider =
-    StateProvider<MultiplayerStatus>((_) => MultiplayerStatus.offline);
+final multiplayerStatusProvider = StateProvider<MultiplayerStatus>(
+  (_) => MultiplayerStatus.offline,
+);
 
 // ── Active game session ───────────────────────────────────────────────────
 
@@ -210,6 +282,11 @@ class GameSessionNotifier extends Notifier<GameSessionState?> {
 
   void startGame(String gameId) {
     _timer?.cancel();
+    final game = allGames.firstWhere(
+      (g) => g.id == gameId,
+      orElse: () => allGames.first,
+    );
+    Analytics.launchGame(gameId, game.title, game.isPaidOnly);
     state = GameSessionState(
       gameId: gameId,
       score: 0,
@@ -252,6 +329,10 @@ class GameSessionNotifier extends Notifier<GameSessionState?> {
   }
 
   void endGame() {
+    final s = state;
+    if (s != null) {
+      Analytics.completeGame(s.gameId, s.score, s.isComplete);
+    }
     _timer?.cancel();
     state = null;
   }
@@ -259,25 +340,25 @@ class GameSessionNotifier extends Notifier<GameSessionState?> {
   String _sampleQuestion(String gameId, int index) {
     final questions = switch (gameId) {
       'word_duel' => [
-          'What is the meaning of "Ephemeral"?',
-          'Which word means "to make amends"?',
-          'Define "Ubiquitous"',
-        ],
+        'What is the meaning of "Ephemeral"?',
+        'Which word means "to make amends"?',
+        'Define "Ubiquitous"',
+      ],
       'equation_rush' => [
-          'Solve: 3x + 7 = 22',
-          'What is √144?',
-          'Simplify: 2(x + 3) = 14',
-        ],
+        'Solve: 3x + 7 = 22',
+        'What is √144?',
+        'Simplify: 2(x + 3) = 14',
+      ],
       'fact_or_fiction' => [
-          'The Great Wall of China is visible from space.',
-          'Humans use only 10% of their brains.',
-          'Lightning never strikes the same place twice.',
-        ],
+        'The Great Wall of China is visible from space.',
+        'Humans use only 10% of their brains.',
+        'Lightning never strikes the same place twice.',
+      ],
       _ => [
-          'Which planet is closest to the Sun?',
-          'What is the capital of France?',
-          'Who wrote Romeo and Juliet?',
-        ],
+        'Which planet is closest to the Sun?',
+        'What is the capital of France?',
+        'Who wrote Romeo and Juliet?',
+      ],
     };
     return questions[index % questions.length];
   }
@@ -285,5 +366,5 @@ class GameSessionNotifier extends Notifier<GameSessionState?> {
 
 final gameSessionProvider =
     NotifierProvider<GameSessionNotifier, GameSessionState?>(
-  GameSessionNotifier.new,
-);
+      GameSessionNotifier.new,
+    );

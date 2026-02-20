@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 import '../models/social_models.dart';
+import '../../../core/persistence/hive_boxes.dart';
+import '../../../core/analytics/analytics.dart';
 
 // ── Sample data ───────────────────────────────────────────────────────────
 
@@ -78,7 +80,8 @@ final _sampleGroups = [
   const StudyGroup(
     id: 'g1',
     name: 'SAT Math Masters',
-    description: 'Daily practice problems, tips, and peer support for SAT Math.',
+    description:
+        'Daily practice problems, tips, and peer support for SAT Math.',
     memberCount: 1247,
     subject: 'Mathematics',
     examTag: 'SAT',
@@ -90,7 +93,8 @@ final _sampleGroups = [
   const StudyGroup(
     id: 'g2',
     name: 'WAEC Science Squad',
-    description: 'Physics, Chemistry, Biology — all WAEC science subjects covered.',
+    description:
+        'Physics, Chemistry, Biology — all WAEC science subjects covered.',
     memberCount: 892,
     subject: 'Science',
     examTag: 'WAEC',
@@ -100,7 +104,8 @@ final _sampleGroups = [
   const StudyGroup(
     id: 'g3',
     name: 'GRE Verbal Prep',
-    description: 'Vocabulary, reading comprehension, and text completion strategies.',
+    description:
+        'Vocabulary, reading comprehension, and text completion strategies.',
     memberCount: 634,
     subject: 'English',
     examTag: 'GRE',
@@ -270,7 +275,15 @@ final _sampleFriends = [
 
 class FeedNotifier extends Notifier<List<SocialPost>> {
   @override
-  List<SocialPost> build() => _samplePosts;
+  List<SocialPost> build() {
+    // Restore liked state from Hive
+    final likedIds = Set<String>.from(
+      socialBox.get(kKeyLikedPostIds, defaultValue: <String>[]) as List,
+    );
+    return _samplePosts
+        .map((p) => p.copyWith(isLiked: likedIds.contains(p.id)))
+        .toList();
+  }
 
   void toggleLike(String postId) {
     state = state.map((p) {
@@ -280,6 +293,19 @@ class FeedNotifier extends Notifier<List<SocialPost>> {
         likes: p.isLiked ? p.likes - 1 : p.likes + 1,
       );
     }).toList();
+    // Persist liked set
+    final likedIds = state.where((p) => p.isLiked).map((p) => p.id).toList();
+    socialBox.put(kKeyLikedPostIds, likedIds);
+    final liked = state.firstWhere((p) => p.id == postId).isLiked;
+    Analytics.likePost(postId, liked);
+  }
+
+  void reportPost(String postId) {
+    state = state.map((p) {
+      if (p.id != postId) return p;
+      return p.copyWith(isReported: true);
+    }).toList();
+    Analytics.reportContent('feed_post', postId, 'inappropriate');
   }
 
   void addPost(String content, List<String> tags) {
@@ -296,6 +322,16 @@ class FeedNotifier extends Notifier<List<SocialPost>> {
       tags: tags,
     );
     state = [post, ...state];
+    Analytics.createPost(post.type.name, tags);
+    // Increment today's post count
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final lastReset =
+        socialBox.get(kKeySocialLastResetDate, defaultValue: '') as String;
+    final count = lastReset == today
+        ? (socialBox.get(kKeyPostsToday, defaultValue: 0) as int)
+        : 0;
+    socialBox.put(kKeySocialLastResetDate, today);
+    socialBox.put(kKeyPostsToday, count + 1);
   }
 }
 
@@ -307,7 +343,19 @@ final feedProvider = NotifierProvider<FeedNotifier, List<SocialPost>>(
 
 class GroupsNotifier extends Notifier<List<StudyGroup>> {
   @override
-  List<StudyGroup> build() => _sampleGroups;
+  List<StudyGroup> build() {
+    // Restore joined state from Hive
+    final joinedIds = Set<String>.from(
+      socialBox.get(kKeyJoinedGroupIds, defaultValue: <String>[]) as List,
+    );
+    return _sampleGroups.map((g) {
+      final joined = joinedIds.contains(g.id);
+      return g.copyWith(
+        isJoined: joined,
+        role: joined ? GroupRole.member : null,
+      );
+    }).toList();
+  }
 
   int get joinedCount => state.where((g) => g.isJoined).length;
 
@@ -326,6 +374,15 @@ class GroupsNotifier extends Notifier<List<StudyGroup>> {
         role: !g.isJoined ? GroupRole.member : null,
       );
     }).toList();
+    // Persist joined IDs
+    final joinedIds = state.where((g) => g.isJoined).map((g) => g.id).toList();
+    socialBox.put(kKeyJoinedGroupIds, joinedIds);
+    final nowJoined = state.firstWhere((g) => g.id == groupId).isJoined;
+    if (nowJoined) {
+      Analytics.joinGroup(groupId, group.name);
+    } else {
+      Analytics.leaveGroup(groupId);
+    }
   }
 }
 
@@ -382,6 +439,11 @@ final friendsProvider = NotifierProvider<FriendsNotifier, List<Friend>>(
 final canPostTodayProvider = Provider<bool>((ref) {
   final isPaid = ref.watch(isPaidProvider);
   if (isPaid) return true;
-  // In production: check Supabase for today's post count
-  return true; // allow first post; enforcement via backend
+  final today = DateTime.now().toIso8601String().substring(0, 10);
+  final lastReset =
+      socialBox.get(kKeySocialLastResetDate, defaultValue: '') as String;
+  final postsToday = lastReset == today
+      ? (socialBox.get(kKeyPostsToday, defaultValue: 0) as int)
+      : 0;
+  return postsToday < 1;
 });

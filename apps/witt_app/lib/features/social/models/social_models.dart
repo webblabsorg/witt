@@ -26,6 +26,7 @@ class SocialPost {
     this.groupId,
     this.groupName,
     this.isLiked = false,
+    this.isReported = false,
     this.tags = const [],
   });
 
@@ -42,29 +43,31 @@ class SocialPost {
   final String? groupId;
   final String? groupName;
   final bool isLiked;
+  final bool isReported;
   final List<String> tags;
 
   SocialPost copyWith({
     bool? isLiked,
     int? likes,
     int? commentCount,
-  }) =>
-      SocialPost(
-        id: id,
-        authorId: authorId,
-        authorName: authorName,
-        authorAvatar: authorAvatar,
-        content: content,
-        type: type,
-        likes: likes ?? this.likes,
-        commentCount: commentCount ?? this.commentCount,
-        createdAt: createdAt,
-        imageUrl: imageUrl,
-        groupId: groupId,
-        groupName: groupName,
-        isLiked: isLiked ?? this.isLiked,
-        tags: tags,
-      );
+    bool? isReported,
+  }) => SocialPost(
+    id: id,
+    authorId: authorId,
+    authorName: authorName,
+    authorAvatar: authorAvatar,
+    content: content,
+    type: type,
+    likes: likes ?? this.likes,
+    commentCount: commentCount ?? this.commentCount,
+    createdAt: createdAt,
+    imageUrl: imageUrl,
+    groupId: groupId,
+    groupName: groupName,
+    isLiked: isLiked ?? this.isLiked,
+    isReported: isReported ?? this.isReported,
+    tags: tags,
+  );
 }
 
 // ── Study Group ───────────────────────────────────────────────────────────
@@ -96,17 +99,17 @@ class StudyGroup {
   final bool isJoined;
 
   StudyGroup copyWith({bool? isJoined, GroupRole? role}) => StudyGroup(
-        id: id,
-        name: name,
-        description: description,
-        memberCount: memberCount,
-        subject: subject,
-        examTag: examTag,
-        isPublic: isPublic,
-        coverEmoji: coverEmoji,
-        role: role ?? this.role,
-        isJoined: isJoined ?? this.isJoined,
-      );
+    id: id,
+    name: name,
+    description: description,
+    memberCount: memberCount,
+    subject: subject,
+    examTag: examTag,
+    isPublic: isPublic,
+    coverEmoji: coverEmoji,
+    role: role ?? this.role,
+    isJoined: isJoined ?? this.isJoined,
+  );
 }
 
 // ── Forum Question ────────────────────────────────────────────────────────
@@ -142,19 +145,19 @@ class ForumQuestion {
   final bool isUpvoted;
 
   ForumQuestion copyWith({bool? isUpvoted, int? votes}) => ForumQuestion(
-        id: id,
-        authorId: authorId,
-        authorName: authorName,
-        authorAvatar: authorAvatar,
-        title: title,
-        body: body,
-        votes: votes ?? this.votes,
-        answerCount: answerCount,
-        createdAt: createdAt,
-        tags: tags,
-        isAnswered: isAnswered,
-        isUpvoted: isUpvoted ?? this.isUpvoted,
-      );
+    id: id,
+    authorId: authorId,
+    authorName: authorName,
+    authorAvatar: authorAvatar,
+    title: title,
+    body: body,
+    votes: votes ?? this.votes,
+    answerCount: answerCount,
+    createdAt: createdAt,
+    tags: tags,
+    isAnswered: isAnswered,
+    isUpvoted: isUpvoted ?? this.isUpvoted,
+  );
 }
 
 // ── Marketplace Deck ──────────────────────────────────────────────────────

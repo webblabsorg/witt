@@ -55,10 +55,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // If onboarding done but not authed, allow home (anonymous access)
       // Redirect away from onboarding screens once done
       if (onboardingDone && location.startsWith('/onboarding')) {
         return '/home';
+      }
+
+      // Role-based portal guards
+      final role = onboarding.role;
+      if (location == '/profile/teacher' && role != 'teacher') {
+        return '/profile';
+      }
+      if (location == '/profile/parent' && role != 'parent') {
+        return '/profile';
       }
 
       return null;
