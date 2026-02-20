@@ -13,8 +13,10 @@ final examByIdProvider = Provider.family<Exam?, String>((ref, id) {
   return examById[id];
 });
 
-final examsByRegionProvider =
-    Provider.family<List<Exam>, ExamRegion>((ref, region) {
+final examsByRegionProvider = Provider.family<List<Exam>, ExamRegion>((
+  ref,
+  region,
+) {
   return allExams.where((e) => e.region == region).toList();
 });
 
@@ -37,12 +39,17 @@ class UserExamsNotifier extends Notifier<List<String>> {
   bool isAdded(String examId) => state.contains(examId);
 }
 
-final userExamsProvider =
-    NotifierProvider<UserExamsNotifier, List<String>>(UserExamsNotifier.new);
+final userExamsProvider = NotifierProvider<UserExamsNotifier, List<String>>(
+  UserExamsNotifier.new,
+);
 
 final userExamListProvider = Provider<List<Exam>>((ref) {
   final ids = ref.watch(userExamsProvider);
   return ids.map((id) => examById[id]).whereType<Exam>().toList();
+});
+
+final myExamsProvider = Provider<List<Exam>>((ref) {
+  return ref.watch(userExamListProvider);
 });
 
 // ── Question session state ────────────────────────────────────────────────
@@ -72,8 +79,7 @@ class QuestionSessionState {
       currentIndex < questions.length ? questions[currentIndex] : null;
 
   int get correctCount => attempts.where((a) => a.isCorrect).length;
-  double get accuracy =>
-      attempts.isEmpty ? 0 : correctCount / attempts.length;
+  double get accuracy => attempts.isEmpty ? 0 : correctCount / attempts.length;
 
   QuestionSessionState copyWith({
     List<Question>? questions,
@@ -84,21 +90,19 @@ class QuestionSessionState {
     List<String>? selectedAnswerIds,
     bool? hasSubmitted,
     bool? isBookmarked,
-  }) =>
-      QuestionSessionState(
-        questions: questions ?? this.questions,
-        currentIndex: currentIndex ?? this.currentIndex,
-        attempts: attempts ?? this.attempts,
-        isComplete: isComplete ?? this.isComplete,
-        startedAt: startedAt ?? this.startedAt,
-        selectedAnswerIds: selectedAnswerIds ?? this.selectedAnswerIds,
-        hasSubmitted: hasSubmitted ?? this.hasSubmitted,
-        isBookmarked: isBookmarked ?? this.isBookmarked,
-      );
+  }) => QuestionSessionState(
+    questions: questions ?? this.questions,
+    currentIndex: currentIndex ?? this.currentIndex,
+    attempts: attempts ?? this.attempts,
+    isComplete: isComplete ?? this.isComplete,
+    startedAt: startedAt ?? this.startedAt,
+    selectedAnswerIds: selectedAnswerIds ?? this.selectedAnswerIds,
+    hasSubmitted: hasSubmitted ?? this.hasSubmitted,
+    isBookmarked: isBookmarked ?? this.isBookmarked,
+  );
 }
 
-class QuestionSessionNotifier
-    extends Notifier<QuestionSessionState?> {
+class QuestionSessionNotifier extends Notifier<QuestionSessionState?> {
   @override
   QuestionSessionState? build() => null;
 
@@ -136,7 +140,8 @@ class QuestionSessionNotifier
 
     final selected = s.selectedAnswerIds;
     final correct = q.correctAnswerIds.toSet();
-    final isCorrect = selected.isNotEmpty &&
+    final isCorrect =
+        selected.isNotEmpty &&
         selected.toSet().containsAll(correct) &&
         correct.containsAll(selected.toSet());
 
@@ -147,15 +152,11 @@ class QuestionSessionNotifier
       userId: userId,
       selectedAnswerIds: selected,
       isCorrect: isCorrect,
-      timeSpentSeconds:
-          DateTime.now().difference(s.startedAt).inSeconds,
+      timeSpentSeconds: DateTime.now().difference(s.startedAt).inSeconds,
       attemptedAt: DateTime.now(),
     );
 
-    state = s.copyWith(
-      attempts: [...s.attempts, attempt],
-      hasSubmitted: true,
-    );
+    state = s.copyWith(attempts: [...s.attempts, attempt], hasSubmitted: true);
   }
 
   void nextQuestion() {
@@ -187,7 +188,8 @@ class QuestionSessionNotifier
 
 final questionSessionProvider =
     NotifierProvider<QuestionSessionNotifier, QuestionSessionState?>(
-        QuestionSessionNotifier.new);
+      QuestionSessionNotifier.new,
+    );
 
 // ── Bookmarked questions ──────────────────────────────────────────────────
 
@@ -208,7 +210,8 @@ class BookmarkedQuestionsNotifier extends Notifier<Set<String>> {
 
 final bookmarkedQuestionsProvider =
     NotifierProvider<BookmarkedQuestionsNotifier, Set<String>>(
-        BookmarkedQuestionsNotifier.new);
+      BookmarkedQuestionsNotifier.new,
+    );
 
 // ── User proficiency per exam/topic ──────────────────────────────────────
 
@@ -229,23 +232,21 @@ class UserProficiency {
     Map<String, double>? topicScores,
     double? overallScore,
     int? questionsAttempted,
-  }) =>
-      UserProficiency(
-        examId: examId,
-        topicScores: topicScores ?? this.topicScores,
-        overallScore: overallScore ?? this.overallScore,
-        questionsAttempted:
-            questionsAttempted ?? this.questionsAttempted,
-      );
+  }) => UserProficiency(
+    examId: examId,
+    topicScores: topicScores ?? this.topicScores,
+    overallScore: overallScore ?? this.overallScore,
+    questionsAttempted: questionsAttempted ?? this.questionsAttempted,
+  );
 }
 
-class UserProficiencyNotifier
-    extends Notifier<Map<String, UserProficiency>> {
+class UserProficiencyNotifier extends Notifier<Map<String, UserProficiency>> {
   @override
   Map<String, UserProficiency> build() => {};
 
   void updateFromAttempt(QuestionAttempt attempt, String topic) {
-    final current = state[attempt.examId] ??
+    final current =
+        state[attempt.examId] ??
         UserProficiency(
           examId: attempt.examId,
           topicScores: {},
@@ -277,4 +278,5 @@ class UserProficiencyNotifier
 
 final userProficiencyProvider =
     NotifierProvider<UserProficiencyNotifier, Map<String, UserProficiency>>(
-        UserProficiencyNotifier.new);
+      UserProficiencyNotifier.new,
+    );

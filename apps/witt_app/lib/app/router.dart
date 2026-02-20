@@ -24,6 +24,7 @@ import '../features/offline/screens/offline_screen.dart';
 import '../screens/sage/sage_screen.dart';
 import '../screens/social/social_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../features/progress/screens/progress_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
@@ -175,6 +176,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 builder: (_, __) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'progress',
+                    builder: (_, __) => const ProgressScreen(),
+                  ),
+                ],
               ),
             ],
           ),

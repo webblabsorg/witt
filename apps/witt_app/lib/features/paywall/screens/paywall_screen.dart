@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:witt_monetization/witt_monetization.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../onboarding/onboarding_state.dart';
@@ -12,6 +13,42 @@ class PaywallScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final purchaseFlow = ref.watch(purchaseFlowProvider);
+    final products = ref.watch(productsProvider);
+
+    final monthly = products.firstWhere(
+      (p) => p.plan == SubscriptionPlan.premiumMonthly,
+      orElse: () => const PurchaseProduct(
+        id: 'witt_premium_monthly',
+        title: 'Premium Monthly',
+        description: '',
+        priceUsd: 9.99,
+        localizedPrice: '\$9.99',
+        currencyCode: 'USD',
+        plan: SubscriptionPlan.premiumMonthly,
+      ),
+    );
+    final yearly = products.firstWhere(
+      (p) => p.plan == SubscriptionPlan.premiumYearly,
+      orElse: () => const PurchaseProduct(
+        id: 'witt_premium_yearly',
+        title: 'Premium Yearly',
+        description: '',
+        priceUsd: 59.99,
+        localizedPrice: '\$59.99',
+        currencyCode: 'USD',
+        plan: SubscriptionPlan.premiumYearly,
+      ),
+    );
+
+    final isLoading = purchaseFlow.status == PurchaseFlowStatus.loading;
+
+    // Navigate away on successful purchase
+    ref.listen(purchaseFlowProvider, (_, next) {
+      if (next.status == PurchaseFlowStatus.success && context.mounted) {
+        context.go('/home');
+      }
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -41,6 +78,27 @@ class PaywallScreen extends ConsumerWidget {
               ),
               const SizedBox(height: WittSpacing.xxxl),
 
+              // Error banner
+              if (purchaseFlow.status == PurchaseFlowStatus.error &&
+                  purchaseFlow.errorMessage != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: WittSpacing.md),
+                  padding: const EdgeInsets.all(WittSpacing.md),
+                  decoration: BoxDecoration(
+                    color: WittColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(WittSpacing.sm),
+                    border: Border.all(
+                      color: WittColors.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    purchaseFlow.errorMessage!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: WittColors.error,
+                    ),
+                  ),
+                ),
+
               // Free plan
               _PlanCard(
                 icon: '✨',
@@ -55,6 +113,7 @@ class PaywallScreen extends ConsumerWidget {
                 ],
                 ctaLabel: 'Continue with Free',
                 ctaVariant: WittButtonVariant.outline,
+                isLoading: false,
                 onTap: () async {
                   await ref.read(onboardingProvider.notifier).complete();
                   if (context.mounted) context.go('/home');
@@ -66,7 +125,7 @@ class PaywallScreen extends ConsumerWidget {
               _PlanCard(
                 icon: '🔥',
                 title: 'PREMIUM MONTHLY',
-                price: '\$9.99/mo',
+                price: '${monthly.localizedPrice}/mo',
                 titleColor: WittColors.primary,
                 isHighlighted: false,
                 badge: '7-day free trial',
@@ -79,7 +138,12 @@ class PaywallScreen extends ConsumerWidget {
                   'Ad-free + cross-device sync',
                 ],
                 ctaLabel: 'Start Free Trial',
-                onTap: () => context.push('/onboarding/feature-comparison'),
+                isLoading: isLoading && purchaseFlow.productId == monthly.id,
+                onTap: isLoading
+                    ? null
+                    : () => ref
+                          .read(purchaseFlowProvider.notifier)
+                          .purchase(monthly),
               ),
               const SizedBox(height: WittSpacing.lg),
 
@@ -87,7 +151,7 @@ class PaywallScreen extends ConsumerWidget {
               _PlanCard(
                 icon: '💎',
                 title: 'PREMIUM YEARLY',
-                price: '\$59.99/yr',
+                price: '${yearly.localizedPrice}/yr',
                 subPrice: '\$5.00/mo',
                 titleColor: WittColors.primaryDark,
                 isHighlighted: true,
@@ -98,7 +162,12 @@ class PaywallScreen extends ConsumerWidget {
                   'Billed annually',
                 ],
                 ctaLabel: 'Subscribe Yearly',
-                onTap: () => context.push('/onboarding/free-trial'),
+                isLoading: isLoading && purchaseFlow.productId == yearly.id,
+                onTap: isLoading
+                    ? null
+                    : () => ref
+                          .read(purchaseFlowProvider.notifier)
+                          .purchase(yearly),
               ),
               const SizedBox(height: WittSpacing.xxl),
 
@@ -107,7 +176,11 @@ class PaywallScreen extends ConsumerWidget {
                 child: Column(
                   children: [
                     TextButton(
-                      onPressed: () {},
+                      onPressed: isLoading
+                          ? null
+                          : () => ref
+                                .read(purchaseFlowProvider.notifier)
+                                .restore(),
                       child: const Text('Restore Purchases'),
                     ),
                     Text(
@@ -135,7 +208,8 @@ class _PlanCard extends StatelessWidget {
     required this.title,
     required this.features,
     required this.ctaLabel,
-    required this.onTap,
+    required this.isLoading,
+    this.onTap,
     this.price,
     this.subPrice,
     this.titleColor,
@@ -155,7 +229,8 @@ class _PlanCard extends StatelessWidget {
   final Color? badgeColor;
   final List<String> features;
   final String ctaLabel;
-  final VoidCallback onTap;
+  final bool isLoading;
+  final VoidCallback? onTap;
   final WittButtonVariant ctaVariant;
 
   @override
@@ -275,15 +350,32 @@ class _PlanCard extends StatelessWidget {
             const SizedBox(height: WittSpacing.lg),
 
             // CTA
-            WittButton(
-              label: ctaLabel,
-              onPressed: onTap,
-              variant: ctaVariant,
-              isFullWidth: true,
-              gradient: ctaVariant == WittButtonVariant.primary
-                  ? WittColors.primaryGradient
-                  : null,
-            ),
+            isLoading
+                ? SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: ctaVariant == WittButtonVariant.primary
+                              ? Colors.white
+                              : WittColors.primary,
+                        ),
+                      ),
+                    ),
+                  )
+                : WittButton(
+                    label: ctaLabel,
+                    onPressed: onTap,
+                    variant: ctaVariant,
+                    isFullWidth: true,
+                    gradient: ctaVariant == WittButtonVariant.primary
+                        ? WittColors.primaryGradient
+                        : null,
+                  ),
           ],
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:witt_monetization/witt_monetization.dart';
 import '../data/exam_catalog.dart';
 import '../models/exam.dart';
 import '../models/question.dart';
@@ -7,9 +8,12 @@ import '../services/test_prep_engine.dart';
 
 // ── TestPrepEngine provider ───────────────────────────────────────────────
 
-final testPrepEngineProvider =
-    Provider.family<TestPrepEngine, String>((ref, examId) {
-  final exam = examById[examId] ??
+final testPrepEngineProvider = Provider.family<TestPrepEngine, String>((
+  ref,
+  examId,
+) {
+  final exam =
+      examById[examId] ??
       Exam(
         id: examId,
         name: examId,
@@ -64,8 +68,7 @@ class TopicDrillState {
       currentIndex < questions.length ? questions[currentIndex] : null;
 
   int get correctCount => attempts.where((a) => a.isCorrect).length;
-  double get accuracy =>
-      attempts.isEmpty ? 0 : correctCount / attempts.length;
+  double get accuracy => attempts.isEmpty ? 0 : correctCount / attempts.length;
   bool get isLast => currentIndex + 1 >= questions.length;
 
   TopicDrillState copyWith({
@@ -82,37 +85,36 @@ class TopicDrillState {
     int? questionsAttemptedTotal,
     DateTime? startedAt,
     String? error,
-  }) =>
-      TopicDrillState(
-        examId: examId ?? this.examId,
-        sectionId: sectionId ?? this.sectionId,
-        topic: topic ?? this.topic,
-        status: status ?? this.status,
-        questions: questions ?? this.questions,
-        currentIndex: currentIndex ?? this.currentIndex,
-        attempts: attempts ?? this.attempts,
-        selectedAnswerIds: selectedAnswerIds ?? this.selectedAnswerIds,
-        hasSubmitted: hasSubmitted ?? this.hasSubmitted,
-        userTheta: userTheta ?? this.userTheta,
-        questionsAttemptedTotal:
-            questionsAttemptedTotal ?? this.questionsAttemptedTotal,
-        startedAt: startedAt ?? this.startedAt,
-        error: error ?? this.error,
-      );
+  }) => TopicDrillState(
+    examId: examId ?? this.examId,
+    sectionId: sectionId ?? this.sectionId,
+    topic: topic ?? this.topic,
+    status: status ?? this.status,
+    questions: questions ?? this.questions,
+    currentIndex: currentIndex ?? this.currentIndex,
+    attempts: attempts ?? this.attempts,
+    selectedAnswerIds: selectedAnswerIds ?? this.selectedAnswerIds,
+    hasSubmitted: hasSubmitted ?? this.hasSubmitted,
+    userTheta: userTheta ?? this.userTheta,
+    questionsAttemptedTotal:
+        questionsAttemptedTotal ?? this.questionsAttemptedTotal,
+    startedAt: startedAt ?? this.startedAt,
+    error: error ?? this.error,
+  );
 
   static TopicDrillState initial(String examId) => TopicDrillState(
-        examId: examId,
-        sectionId: '',
-        topic: '',
-        status: DrillStatus.idle,
-        questions: const [],
-        currentIndex: 0,
-        attempts: const [],
-        selectedAnswerIds: const [],
-        hasSubmitted: false,
-        userTheta: 0.0,
-        questionsAttemptedTotal: 0,
-      );
+    examId: examId,
+    sectionId: '',
+    topic: '',
+    status: DrillStatus.idle,
+    questions: const [],
+    currentIndex: 0,
+    attempts: const [],
+    selectedAnswerIds: const [],
+    hasSubmitted: false,
+    userTheta: 0.0,
+    questionsAttemptedTotal: 0,
+  );
 }
 
 class TopicDrillNotifier extends FamilyNotifier<TopicDrillState, String> {
@@ -186,7 +188,8 @@ class TopicDrillNotifier extends FamilyNotifier<TopicDrillState, String> {
 
     final selected = state.selectedAnswerIds;
     final correct = q.correctAnswerIds.toSet();
-    final isCorrect = selected.isNotEmpty &&
+    final isCorrect =
+        selected.isNotEmpty &&
         selected.toSet().containsAll(correct) &&
         correct.containsAll(selected.toSet());
 
@@ -251,13 +254,13 @@ class TopicDrillNotifier extends FamilyNotifier<TopicDrillState, String> {
     state = TopicDrillState.initial(arg);
   }
 
-  int get readiness =>
-      _engine.thetaToReadiness(state.userTheta);
+  int get readiness => _engine.thetaToReadiness(state.userTheta);
 }
 
 final topicDrillProvider =
     NotifierProviderFamily<TopicDrillNotifier, TopicDrillState, String>(
-        TopicDrillNotifier.new);
+      TopicDrillNotifier.new,
+    );
 
 // ── Paywall state ─────────────────────────────────────────────────────────
 
@@ -281,8 +284,10 @@ class PaywallTrigger {
   final double yearlyPrice;
 }
 
-final paywallTriggerProvider =
-    Provider.family<PaywallTrigger?, String>((ref, examId) {
+final paywallTriggerProvider = Provider.family<PaywallTrigger?, String>((
+  ref,
+  examId,
+) {
   final exam = examById[examId];
   if (exam == null) return null;
   final proficiency = ref.watch(userProficiencyProvider)[examId];
@@ -297,13 +302,12 @@ final paywallTriggerProvider =
   );
 });
 
-// ── Paid user stub (Phase 2 — always false until Subrail wired in Phase 3) ──
+// ── Paid user — wired to real entitlement state (Phase 3) ────────────────
 
-final isPaidUserProvider = Provider<bool>((ref) => false);
+final isPaidUserProvider = Provider<bool>((ref) {
+  return ref.watch(isPaidProvider);
+});
 
 final isExamUnlockedProvider = Provider.family<bool, String>((ref, examId) {
-  final isPaid = ref.watch(isPaidUserProvider);
-  if (isPaid) return true;
-  final exam = examById[examId];
-  return exam?.tier == ExamTier.free;
+  return ref.watch(isExamUnlockedByEntitlementProvider(examId));
 });
