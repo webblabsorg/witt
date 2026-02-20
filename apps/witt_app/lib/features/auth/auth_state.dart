@@ -1,14 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/notifications/notification_service.dart';
 
-enum AuthStatus { initial, loading, authenticated, anonymous, unauthenticated, error }
+enum AuthStatus {
+  initial,
+  loading,
+  authenticated,
+  anonymous,
+  unauthenticated,
+  error,
+}
 
 class AuthState {
-  const AuthState({
-    this.status = AuthStatus.initial,
-    this.user,
-    this.error,
-  });
+  const AuthState({this.status = AuthStatus.initial, this.user, this.error});
 
   final AuthStatus status;
   final User? user;
@@ -19,11 +23,7 @@ class AuthState {
 
   bool get isAnonymous => status == AuthStatus.anonymous;
 
-  AuthState copyWith({
-    AuthStatus? status,
-    User? user,
-    String? error,
-  }) {
+  AuthState copyWith({AuthStatus? status, User? user, String? error}) {
     return AuthState(
       status: status ?? this.status,
       user: user ?? this.user,
@@ -53,10 +53,8 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       await _client.auth.signInWithOAuth(OAuthProvider.google);
       final user = _client.auth.currentUser;
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: user,
-      );
+      if (user != null) await NotificationService.identifyUser(user.id);
+      state = AuthState(status: AuthStatus.authenticated, user: user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -68,10 +66,8 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       await _client.auth.signInWithOAuth(OAuthProvider.apple);
       final user = _client.auth.currentUser;
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: user,
-      );
+      if (user != null) await NotificationService.identifyUser(user.id);
+      state = AuthState(status: AuthStatus.authenticated, user: user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -85,10 +81,10 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
         password: password,
       );
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: response.user,
-      );
+      if (response.user != null) {
+        await NotificationService.identifyUser(response.user!.id);
+      }
+      state = AuthState(status: AuthStatus.authenticated, user: response.user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -102,10 +98,10 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
         password: password,
       );
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: response.user,
-      );
+      if (response.user != null) {
+        await NotificationService.identifyUser(response.user!.id);
+      }
+      state = AuthState(status: AuthStatus.authenticated, user: response.user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -124,10 +120,10 @@ class AuthNotifier extends Notifier<AuthState> {
         token: token,
         type: OtpType.sms,
       );
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: response.user,
-      );
+      if (response.user != null) {
+        await NotificationService.identifyUser(response.user!.id);
+      }
+      state = AuthState(status: AuthStatus.authenticated, user: response.user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -138,10 +134,7 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
     try {
       final response = await _client.auth.signInAnonymously();
-      state = AuthState(
-        status: AuthStatus.anonymous,
-        user: response.user,
-      );
+      state = AuthState(status: AuthStatus.anonymous, user: response.user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -149,6 +142,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    NotificationService.clearUser();
     await _client.auth.signOut();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
@@ -162,8 +156,9 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 }
 
-final authNotifierProvider =
-    NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);
 
 final isAuthenticatedProvider = Provider<bool>((ref) {
   return ref.watch(authNotifierProvider).isAuthenticated;

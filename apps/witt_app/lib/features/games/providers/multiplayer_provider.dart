@@ -13,6 +13,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/game_models.dart';
+import '../../../core/notifications/notification_service.dart';
+import 'game_providers.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────
 
@@ -37,14 +39,13 @@ class MultiplayerState {
     String? opponentId,
     String? gameId,
     String? error,
-  }) =>
-      MultiplayerState(
-        status: status ?? this.status,
-        sessionId: sessionId ?? this.sessionId,
-        opponentId: opponentId ?? this.opponentId,
-        gameId: gameId ?? this.gameId,
-        error: error ?? this.error,
-      );
+  }) => MultiplayerState(
+    status: status ?? this.status,
+    sessionId: sessionId ?? this.sessionId,
+    opponentId: opponentId ?? this.opponentId,
+    gameId: gameId ?? this.gameId,
+    error: error ?? this.error,
+  );
 }
 
 // ── Notifier ──────────────────────────────────────────────────────────────
@@ -114,6 +115,23 @@ class MultiplayerNotifier extends Notifier<MultiplayerState> {
 
     final opponentId = p1 == myUid ? p2 : p1;
     final sessionId = record['id'] as String?;
+    final gameId = record['game_id'] as String? ?? state.gameId ?? 'game';
+
+    // Notify the opponent that they have been matched
+    if (opponentId != null && sessionId != null) {
+      final gameTitle =
+          allGames
+              .where((g) => g.id == gameId)
+              .map((g) => g.title)
+              .firstOrNull ??
+          gameId;
+      NotificationService.notifyGameInvite(
+        targetUserId: opponentId,
+        fromName: 'A player',
+        gameTitle: gameTitle,
+        sessionId: sessionId,
+      );
+    }
 
     state = state.copyWith(
       status: MultiplayerStatus.inGame,
@@ -128,10 +146,7 @@ class MultiplayerNotifier extends Notifier<MultiplayerState> {
     _channel = null;
 
     if (_queueRowId != null) {
-      await _db
-          .from('multiplayer_queue')
-          .delete()
-          .eq('id', _queueRowId!);
+      await _db.from('multiplayer_queue').delete().eq('id', _queueRowId!);
       _queueRowId = null;
     }
 
@@ -148,8 +163,8 @@ class MultiplayerNotifier extends Notifier<MultiplayerState> {
 
 final multiplayerProvider =
     NotifierProvider<MultiplayerNotifier, MultiplayerState>(
-  MultiplayerNotifier.new,
-);
+      MultiplayerNotifier.new,
+    );
 
 /// Convenience: current status only (replaces old StateProvider).
 final multiplayerStatusProvider = Provider<MultiplayerStatus>((ref) {

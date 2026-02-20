@@ -6,6 +6,7 @@ import 'package:witt_ui/witt_ui.dart';
 
 import '../models/game_models.dart';
 import '../providers/game_providers.dart';
+import '../providers/multiplayer_provider.dart';
 
 class PlayHubScreen extends ConsumerStatefulWidget {
   const PlayHubScreen({super.key});
@@ -554,7 +555,8 @@ class _MultiplayerTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPaid = ref.watch(isPaidProvider);
-    final status = ref.watch(multiplayerStatusProvider);
+    final mp = ref.watch(multiplayerProvider);
+    final status = mp.status;
     final theme = Theme.of(context);
 
     if (!isPaid) {
@@ -623,12 +625,13 @@ class _MultiplayerTab extends ConsumerWidget {
                 label: status == MultiplayerStatus.offline
                     ? 'Go Online'
                     : 'Disconnect',
-                onPressed: () =>
-                    ref
-                        .read(multiplayerStatusProvider.notifier)
-                        .state = status == MultiplayerStatus.offline
-                    ? MultiplayerStatus.searching
-                    : MultiplayerStatus.offline,
+                onPressed: () {
+                  if (status == MultiplayerStatus.offline) {
+                    ref.read(multiplayerProvider.notifier).findMatch('general');
+                  } else {
+                    ref.read(multiplayerProvider.notifier).cancelSearch();
+                  }
+                },
                 variant: status == MultiplayerStatus.offline
                     ? WittButtonVariant.primary
                     : WittButtonVariant.outline,
@@ -668,18 +671,25 @@ class _MultiplayerTab extends ConsumerWidget {
                         ),
                       ),
                       WittButton(
-                        label: 'Find Match',
-                        onPressed: () {
-                          ref.read(multiplayerStatusProvider.notifier).state =
-                              MultiplayerStatus.searching;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Searching for ${g.title} opponent…',
-                              ),
-                            ),
-                          );
-                        },
+                        label:
+                            status == MultiplayerStatus.inGame &&
+                                mp.gameId == g.id
+                            ? 'In Game'
+                            : 'Find Match',
+                        onPressed: status == MultiplayerStatus.inGame
+                            ? null
+                            : () {
+                                ref
+                                    .read(multiplayerProvider.notifier)
+                                    .findMatch(g.id);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Searching for ${g.title} opponent…',
+                                    ),
+                                  ),
+                                );
+                              },
                         size: WittButtonSize.sm,
                       ),
                     ],

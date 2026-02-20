@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 import '../models/social_models.dart';
 import '../../../core/persistence/hive_boxes.dart';
 import '../../../core/analytics/analytics.dart';
+import '../../../core/notifications/notification_service.dart';
 
 // ── Sample data ───────────────────────────────────────────────────────────
 
@@ -308,7 +310,7 @@ class FeedNotifier extends Notifier<List<SocialPost>> {
     Analytics.reportContent('feed_post', postId, 'inappropriate');
   }
 
-  void addPost(String content, List<String> tags) {
+  Future<void> addPost(String content, List<String> tags) async {
     final post = SocialPost(
       id: 'p_${DateTime.now().millisecondsSinceEpoch}',
       authorId: 'me',
@@ -323,7 +325,8 @@ class FeedNotifier extends Notifier<List<SocialPost>> {
     );
     state = [post, ...state];
     Analytics.createPost(post.type.name, tags);
-    // Increment today's post count
+
+    // Optimistic local counter update
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final lastReset =
         socialBox.get(kKeySocialLastResetDate, defaultValue: '') as String;
@@ -332,6 +335,36 @@ class FeedNotifier extends Notifier<List<SocialPost>> {
         : 0;
     socialBox.put(kKeySocialLastResetDate, today);
     socialBox.put(kKeyPostsToday, count + 1);
+
+    // Server-authoritative: call record_social_post RPC
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid != null) {
+      try {
+        await Supabase.instance.client.rpc(
+          'record_social_post',
+          params: {'p_user_id': uid},
+        );
+        // Notify group members if this post is tagged to a group
+        // (In production: pass group member IDs from server; here we
+        // trigger the service hook — the Edge Function resolves members.)
+        if (tags.isNotEmpty) {
+          await NotificationService.notifyGroupPost(
+            memberUserIds: const [], // resolved server-side via Edge Function
+            groupName: tags.first,
+            authorName: 'You',
+          );
+        }
+      } on PostgrestException catch (e) {
+        if (e.message.contains('post_limit_exceeded')) {
+          // Roll back the optimistic post and local counter
+          state = state.where((p) => p.id != post.id).toList();
+          socialBox.put(kKeyPostsToday, count);
+        }
+        // Other errors: non-fatal, post stays visible locally
+      } catch (_) {
+        // Network error: non-fatal
+      }
+    }
   }
 }
 
@@ -450,14 +483,59 @@ final friendsProvider = NotifierProvider<FriendsNotifier, List<Friend>>(
 
 // ── Post limit provider (free: 1 post/day) ────────────────────────────────
 
-final canPostTodayProvider = Provider<bool>((ref) {
+/// Async provider: fetches today's post count from the server on first read,
+/// falls back to local Hive counter when unauthenticated or offline.
+final postsRemainingProvider = FutureProvider<int>((ref) async {
   final isPaid = ref.watch(isPaidProvider);
-  if (isPaid) return true;
+  if (isPaid) return 999;
+
+  final uid = Supabase.instance.client.auth.currentUser?.id;
+  if (uid != null) {
+    try {
+      final count =
+          await Supabase.instance.client.rpc(
+                'get_posts_today',
+                params: {'p_user_id': uid},
+              )
+              as int;
+      // Sync local Hive with server value
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      socialBox.put(kKeySocialLastResetDate, today);
+      socialBox.put(kKeyPostsToday, count);
+      return (1 - count).clamp(0, 1);
+    } catch (_) {
+      // Fall through to local
+    }
+  }
+
+  // Local fallback
   final today = DateTime.now().toIso8601String().substring(0, 10);
   final lastReset =
       socialBox.get(kKeySocialLastResetDate, defaultValue: '') as String;
   final postsToday = lastReset == today
       ? (socialBox.get(kKeyPostsToday, defaultValue: 0) as int)
       : 0;
-  return postsToday < 1;
+  return (1 - postsToday).clamp(0, 1);
+});
+
+/// Synchronous convenience: true if the user can post right now.
+final canPostTodayProvider = Provider<bool>((ref) {
+  final isPaid = ref.watch(isPaidProvider);
+  if (isPaid) return true;
+  // Use async value if available, otherwise fall back to local Hive
+  final remaining = ref.watch(postsRemainingProvider);
+  return remaining.when(
+    data: (r) => r > 0,
+    loading: () {
+      // Local fallback while loading
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      final lastReset =
+          socialBox.get(kKeySocialLastResetDate, defaultValue: '') as String;
+      final postsToday = lastReset == today
+          ? (socialBox.get(kKeyPostsToday, defaultValue: 0) as int)
+          : 0;
+      return postsToday < 1;
+    },
+    error: (_, __) => false,
+  );
 });

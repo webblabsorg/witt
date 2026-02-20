@@ -267,12 +267,6 @@ final canPlayGameProvider = Provider<bool>((ref) {
   return played < 3;
 });
 
-// ── Multiplayer status ────────────────────────────────────────────────────
-
-final multiplayerStatusProvider = StateProvider<MultiplayerStatus>(
-  (_) => MultiplayerStatus.offline,
-);
-
 // ── Active game session ───────────────────────────────────────────────────
 
 class GameSessionNotifier extends Notifier<GameSessionState?> {
