@@ -73,6 +73,9 @@ dependencies:
   # Push notifications
   onesignal_flutter: ^5.2.10
 
+  # Deep links — OS-level dispatch (Android App Links, iOS Universal Links, macOS, Windows)
+  app_links: ^6.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

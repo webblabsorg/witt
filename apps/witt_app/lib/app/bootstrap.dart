@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,6 +21,11 @@ class Bootstrap {
   Bootstrap._();
 
   static Mixpanel? _mixpanel;
+  static final _appLinks = AppLinks();
+  static StreamSubscription<Uri>? _linkSub;
+
+  /// Stream of incoming deep-link URIs — GoRouter listens to this.
+  static Stream<Uri> get linkStream => _appLinks.uriLinkStream;
 
   /// Initializes all services then calls [appRunner] inside Sentry's zone
   /// so Flutter framework errors are captured automatically.
@@ -96,7 +102,25 @@ class Bootstrap {
       options.environment = env;
       options.debug = kDebugMode;
     }, appRunner: () => runApp(app));
+
+    // Start OS-level deep-link listener (witt:// and https://witt.app).
+    // GoRouter's routerProvider subscribes to Bootstrap.linkStream.
+    _linkSub = _appLinks.uriLinkStream.listen(
+      (uri) => _pendingLink = uri,
+      onError: (_) {},
+    );
   }
+
+  static Uri? _pendingLink;
+
+  /// Consume and clear the pending cold-start deep link (if any).
+  static Uri? consumePendingLink() {
+    final link = _pendingLink;
+    _pendingLink = null;
+    return link;
+  }
+
+  static void cancelLinkSub() => _linkSub?.cancel();
 
   /// Convenience accessor for the Supabase client.
   static SupabaseClient get supabase => Supabase.instance.client;

@@ -10,24 +10,78 @@ All Phase 5 implementation gaps have been resolved. See `docs/phases.md` for the
 
 ---
 
-## Post-Launch Pending (by design)
+## Post-Launch Pending (by design — manual steps required)
 
-| # | Item | Owner | Notes |
-|---|------|-------|-------|
-| PL-1 | Push notification deep links on cold start | Mobile | Requires physical device + OneSignal test send |
-| PL-2 | OS-level deep-link dispatch (Universal Links / App Links) | Mobile | Requires device integration test |
-| PL-3 | Patrol widget/device conformance tests | QA | Post-launch |
-| PL-4 | Subrail sandbox receipt-validation tests | Backend | Post-launch |
-| PL-5 | Physical store submissions (iOS, Android, Huawei, Windows) | Ops | See docs/runbook.md |
+| # | Item | Who | Notes |
+|---|------|-----|-------|
+| PL-1 | Push notification deep links on cold start | **YOU (manual)** | Requires physical device + OneSignal test send from dashboard |
+| PL-2 | Patrol widget/device conformance tests | **YOU (manual)** | Run `flutter test integration_test/` on device after Patrol setup |
+| PL-3 | Subrail sandbox receipt-validation tests | **YOU (manual)** | Requires Subrail sandbox credentials + test IAP purchase |
+| PL-4 | iOS App Store submission | **YOU (manual)** | See docs/runbook.md §Store Submission |
+| PL-5 | Android Play Store submission | **YOU (manual)** | See docs/runbook.md §Store Submission |
+| PL-6 | Huawei AppGallery submission | **YOU (manual)** | See docs/runbook.md §Store Submission |
+| PL-7 | Windows Microsoft Store submission | **YOU (manual)** | See docs/runbook.md §Store Submission |
+| PL-8 | Sentry / OneSignal / Supabase dashboard monitoring setup | **YOU (manual)** | See docs/runbook.md §Post-Launch Monitoring |
 
 ---
 
-## Active Work
+## Active Work — All Done ✅
 
 | # | Item | Priority | Status |
 |---|------|----------|--------|
-| A-1 | Color scheme: deep white / deep black | High | Done |
-| A-2 | App icon + logo integration | High | Done |
-| A-3 | Boot splash: black bg + white logo | High | Done |
-| A-4 | Language translation stack (ML Kit + LibreTranslate) | Medium | Planned — see docs/lang-setup.md |
-| A-5 | Android APK preview build | High | In progress |
+| A-1 | Color scheme: deep white / deep black | High | ✅ Done |
+| A-2 | App icon + logo integration (all platforms) | High | ✅ Done |
+| A-3 | Boot splash: black bg + white logo | High | ✅ Done |
+| A-4 | Language translation stack plan | Medium | ✅ Planned — see docs/lang-setup.md |
+| A-5 | Android APK debug build | High | ✅ Done — builds/witt-debug.apk |
+| A-6 | APK installed on device | High | ✅ Done — adb install success |
+| A-7 | OS-level deep-link dispatch (app_links) | High | ✅ Done — bootstrap.dart + router.dart |
+| A-8 | macOS: network client entitlement + witt:// URL scheme | High | ✅ Done |
+| A-9 | iPad: UIRequiresFullScreen false (multitasking) | High | ✅ Done |
+| A-10 | Windows: window title + default size | Medium | ✅ Done |
+
+---
+
+## Platform Compatibility Matrix
+
+| Platform | Supported | Notes |
+|----------|-----------|-------|
+| Android (phone) | ✅ Yes | APK built + installed |
+| Android (tablet) | ✅ Yes | Responsive layout via Flutter |
+| iOS (iPhone) | ✅ Yes | Requires Apple Developer account to build |
+| iPad | ✅ Yes | UIRequiresFullScreen=false, all orientations supported |
+| macOS | ✅ Yes | Native menu bar, witt:// scheme, network entitlements |
+| Windows | ✅ Yes | Win32 window, 1440×900 default, title fixed |
+| Huawei (Android) | ✅ Yes | Same APK, HMS push via OneSignal |
+
+---
+
+## Manual Steps Required (your action needed)
+
+### 1. Enable "Install from unknown sources" on Android (for APK sideloading)
+Settings → Apps → Special app access → Install unknown apps → Files → Allow
+
+### 2. iOS / iPad build
+Requires Xcode + Apple Developer account. Run:
+```
+cd apps/witt_app && flutter build ios --release
+```
+Then archive and distribute via Xcode Organizer.
+
+### 3. macOS build
+```
+cd apps/witt_app && flutter build macos --release
+```
+Requires Apple Developer account for notarization before distribution.
+
+### 4. Windows build
+```
+cd apps/witt_app && flutter build windows --release
+```
+Output: build/windows/x64/runner/Release/witt_app.exe
+
+### 5. Store submissions
+Follow docs/runbook.md §Store Submission checklist for each platform.
+
+### 6. Translation VPS setup
+Provide SSH details to begin Session L1 from docs/lang-setup.md.

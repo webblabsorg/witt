@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:meta/meta.dart';
-
+import 'bootstrap.dart';
 import 'scaffold_with_nav.dart';
 import '../features/onboarding/onboarding_state.dart';
 import '../features/onboarding/screens/splash_screen.dart'
@@ -43,11 +42,18 @@ final routerProvider = Provider<GoRouter>((ref) {
   final onboarding = ref.watch(onboardingProvider);
   final auth = ref.watch(authNotifierProvider);
 
-  return GoRouter(
+  // Handle cold-start deep link (app opened via witt:// or https://witt.app)
+  final coldLink = Bootstrap.consumePendingLink();
+  final initialLocation = coldLink != null
+      ? coldLink.path.isNotEmpty
+            ? coldLink.path
+            : _initialLocation(onboarding, auth)
+      : _initialLocation(onboarding, auth);
+
+  final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: _initialLocation(onboarding, auth),
+    initialLocation: initialLocation,
     // Deep link schemes: witt:// and https://witt.app
-    // GoRouter handles these automatically via the OS intent/URL handler.
     // Routes below map 1:1 to the spec §4.4 deep-link conformance table.
     redirect: (context, state) => computeRedirect(
       location: state.matchedLocation,
@@ -209,6 +215,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Wire OS-level deep-link stream (background / foreground links)
+  Bootstrap.linkStream.listen((uri) {
+    final path = uri.path.isNotEmpty ? uri.path : '/home';
+    router.go(path);
+  }, onError: (_) {});
+
+  return router;
 });
 
 String _initialLocation(OnboardingData onboarding, AuthState auth) {
