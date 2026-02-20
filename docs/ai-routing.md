@@ -109,14 +109,19 @@ All progress state is now Hive-persisted via subclasses in `persistent_notifiers
 
 All 5 in-memory providers are overridden at `ProviderScope` level in `main.dart` — zero call-site changes required.
 
-### Purchase Flow ⚠️ Open — Pre-launch blocker
-`PurchaseFlowNotifier.purchase()` (`packages/witt_monetization/lib/src/providers/entitlement_provider.dart`) is a **simulated flow** (2-second delay + grant trial entitlement locally). No real billing SDK is called.
+### Purchase Flow ✅ Resolved
+`PurchaseFlowNotifier` (`packages/witt_monetization/lib/src/providers/entitlement_provider.dart`) now calls the real Subrail Flutter SDK. All 3 methods are wired:
 
-**Billing SDK:** Subrail (`/Documents/Projects/subrail`). The directory exists but is not yet populated with SDK code.
+- `purchase()` → `Subrail.getProducts()` + `Subrail.purchaseProduct()` + `_applyCustomerInfo()`
+- `restore()` → `Subrail.restorePurchases()` + `_applyCustomerInfo()`
+- `purchaseExam()` → `Subrail.getProducts()` + `Subrail.purchaseProduct()` + `unlockExam()`
 
-**Required before App Store submission:**
-1. Populate `/Documents/Projects/subrail` with the Subrail SDK.
-2. Add it as a path dependency in `packages/witt_monetization/pubspec.yaml`.
-3. Replace the simulated bodies of `purchase()`, `restore()`, and `purchaseExam()` in `PurchaseFlowNotifier` with real Subrail SDK calls — method signatures are already in place.
+`_applyCustomerInfo()` maps Subrail `CustomerInfo` entitlements to the app's `Entitlement` model (handles `premium_monthly`, `premium_yearly`, `lifetime`, trial period detection).
 
-**Cross-device entitlement sync** also requires a Supabase `user_entitlements` table and hydration on auth state change.
+**SDK initialization:** `Subrail.configure()` is called in `bootstrap.dart` on app start (sandbox in debug, warn log level in prod). Supabase user identity is synced via `Subrail.logIn(userId)` / `Subrail.logOut()` on every auth state change.
+
+**Runtime requirement:** `SUBRAIL_API_KEY` must be set in `.env.dev` / `.env.staging` / `.env.prod`. SDK silently skips initialization if the key is missing (purchase calls will surface an error state). See `docs/env` for key location.
+
+**Remaining pre-launch work:**
+- Cross-device entitlement hydration on app start (currently only updated on purchase/restore — requires calling `Subrail.getCustomerInfo()` on auth and applying the result via `_applyCustomerInfo()`).
+- App Store / Play Store product IDs must match the identifiers configured in the Subrail dashboard (`witt_premium_monthly`, `witt_premium_yearly`, `exam_<examId>`).
