@@ -240,16 +240,86 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
 
   Future<void> _handleEducationLevel(String level) async {
     setState(() => _selectedLevel = level);
-    // COPPA: Middle School implies potential under-13 — require parental consent
+    // COPPA: Middle School implies potential under-13 — collect birth year then
+    // show parental consent dialog if the user is actually under 13.
     if (level == 'Middle School') {
-      final consented = await _showCoppaGate();
-      if (!consented) {
+      final birthYear = await _showBirthYearPicker();
+      if (birthYear == null) {
         setState(() => _selectedLevel = null);
         return;
+      }
+      await ref.read(onboardingProvider.notifier).setBirthYear(birthYear);
+      if (PrivacyService.isUnder13(birthYear)) {
+        final consented = await _showCoppaGate();
+        if (!consented) {
+          setState(() => _selectedLevel = null);
+          return;
+        }
       }
     }
     await ref.read(onboardingProvider.notifier).setEducationLevel(level);
     if (mounted) _next();
+  }
+
+  /// Shows a year-picker dialog and returns the selected birth year, or null if
+  /// the user cancelled.
+  Future<int?> _showBirthYearPicker() async {
+    final currentYear = DateTime.now().year;
+    int selectedYear = currentYear - 13;
+    return showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('What year were you born?'),
+          content: SizedBox(
+            height: 200,
+            child: ListWheelScrollView.useDelegate(
+              itemExtent: 44,
+              diameterRatio: 1.4,
+              physics: const FixedExtentScrollPhysics(),
+              controller: FixedExtentScrollController(
+                initialItem: currentYear - 13 - (currentYear - 30),
+              ),
+              onSelectedItemChanged: (index) {
+                setDialogState(() => selectedYear = currentYear - 30 + index);
+              },
+              childDelegate: ListWheelChildBuilderDelegate(
+                childCount: 20,
+                builder: (_, index) {
+                  final year = currentYear - 30 + index;
+                  final isSelected = year == selectedYear;
+                  return Center(
+                    child: Text(
+                      '$year',
+                      style: TextStyle(
+                        fontSize: isSelected ? 22 : 16,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelected
+                            ? WittColors.primary
+                            : Theme.of(ctx).textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, selectedYear),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<bool> _showCoppaGate() async {

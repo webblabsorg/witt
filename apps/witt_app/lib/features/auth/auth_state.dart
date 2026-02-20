@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/notifications/notification_service.dart';
+import '../../core/security/secure_storage.dart';
 
 enum AuthStatus {
   initial,
@@ -48,13 +49,26 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState(status: AuthStatus.unauthenticated);
   }
 
+  // Persists the current session tokens to secure storage.
+  Future<void> _persistSession(Session? session) async {
+    if (session == null) return;
+    await SecureStorage.saveTokens(
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+    );
+    await SecureStorage.saveUserId(session.user.id);
+  }
+
   Future<void> signInWithGoogle() async {
     state = state.copyWith(status: AuthStatus.loading);
     try {
       await _client.auth.signInWithOAuth(OAuthProvider.google);
-      final user = _client.auth.currentUser;
-      if (user != null) await NotificationService.identifyUser(user.id);
-      state = AuthState(status: AuthStatus.authenticated, user: user);
+      final session = _client.auth.currentSession;
+      await _persistSession(session);
+      if (session?.user != null) {
+        await NotificationService.identifyUser(session!.user.id);
+      }
+      state = AuthState(status: AuthStatus.authenticated, user: session?.user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -65,9 +79,12 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
     try {
       await _client.auth.signInWithOAuth(OAuthProvider.apple);
-      final user = _client.auth.currentUser;
-      if (user != null) await NotificationService.identifyUser(user.id);
-      state = AuthState(status: AuthStatus.authenticated, user: user);
+      final session = _client.auth.currentSession;
+      await _persistSession(session);
+      if (session?.user != null) {
+        await NotificationService.identifyUser(session!.user.id);
+      }
+      state = AuthState(status: AuthStatus.authenticated, user: session?.user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
       rethrow;
@@ -81,6 +98,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
         password: password,
       );
+      await _persistSession(response.session);
       if (response.user != null) {
         await NotificationService.identifyUser(response.user!.id);
       }
@@ -98,6 +116,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
         password: password,
       );
+      await _persistSession(response.session);
       if (response.user != null) {
         await NotificationService.identifyUser(response.user!.id);
       }
@@ -120,6 +139,7 @@ class AuthNotifier extends Notifier<AuthState> {
         token: token,
         type: OtpType.sms,
       );
+      await _persistSession(response.session);
       if (response.user != null) {
         await NotificationService.identifyUser(response.user!.id);
       }
@@ -134,6 +154,7 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
     try {
       final response = await _client.auth.signInAnonymously();
+      await _persistSession(response.session);
       state = AuthState(status: AuthStatus.anonymous, user: response.user);
     } catch (e) {
       state = AuthState(status: AuthStatus.error, error: e.toString());
@@ -143,6 +164,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> signOut() async {
     NotificationService.clearUser();
+    await SecureStorage.clearTokens();
     await _client.auth.signOut();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
@@ -151,8 +173,9 @@ class AuthNotifier extends Notifier<AuthState> {
     await _client.auth.updateUser(
       UserAttributes(email: email, password: password),
     );
-    final user = _client.auth.currentUser;
-    state = AuthState(status: AuthStatus.authenticated, user: user);
+    final session = _client.auth.currentSession;
+    await _persistSession(session);
+    state = AuthState(status: AuthStatus.authenticated, user: session?.user);
   }
 }
 

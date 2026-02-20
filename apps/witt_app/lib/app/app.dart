@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 import 'package:witt_ui/witt_ui.dart';
 
@@ -70,7 +71,13 @@ class _WittAppState extends ConsumerState<WittApp> {
             menus: [
               PlatformMenuItemGroup(
                 members: [
-                  PlatformMenuItem(label: 'About Witt', onSelected: () {}),
+                  PlatformMenuItem(
+                    label: 'About Witt',
+                    onSelected: () => launchUrl(
+                      Uri.parse('https://witt.app'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
                 ],
               ),
               PlatformMenuItemGroup(
@@ -81,7 +88,7 @@ class _WittAppState extends ConsumerState<WittApp> {
                       LogicalKeyboardKey.comma,
                       meta: true,
                     ),
-                    onSelected: () {},
+                    onSelected: () => router.go('/profile'),
                   ),
                 ],
               ),

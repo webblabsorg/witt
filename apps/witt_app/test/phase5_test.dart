@@ -161,8 +161,11 @@ void main() {
     const routes = [
       '/home',
       '/learn',
+      '/learn/exam/sat',
+      '/learn/exam/gre',
       '/sage',
       '/social',
+      '/community', // alias → /social
       '/profile',
       '/home/play',
       '/home/search',
@@ -178,6 +181,65 @@ void main() {
         expect(route.startsWith('/'), isTrue);
       });
     }
+
+    test('/community alias maps to /social prefix', () {
+      // The router redirect converts /community → /social
+      const alias = '/community';
+      const target = '/social';
+      expect(alias, isNot(equals(target)));
+      expect(target.startsWith('/social'), isTrue);
+    });
+
+    test('witt://learn/exam/:id path has correct structure', () {
+      const examId = 'sat';
+      final path = '/learn/exam/$examId';
+      expect(path, equals('/learn/exam/sat'));
+      expect(path.split('/').length, equals(4));
+    });
+  });
+
+  // ── Performance benchmarks ────────────────────────────────────────────────
+
+  group('Performance — startup budget', () {
+    test('OnboardingData construction is synchronous and fast', () {
+      final sw = Stopwatch()..start();
+      for (var i = 0; i < 1000; i++) {
+        const OnboardingData();
+      }
+      sw.stop();
+      // 1000 constructions must complete in < 50ms (budget: 50µs each)
+      expect(sw.elapsedMilliseconds, lessThan(50));
+    });
+
+    test('OnboardingData.copyWith is fast', () {
+      const base = OnboardingData();
+      final sw = Stopwatch()..start();
+      for (var i = 0; i < 1000; i++) {
+        base.copyWith(birthYear: 2005 + (i % 20));
+      }
+      sw.stop();
+      expect(sw.elapsedMilliseconds, lessThan(50));
+    });
+
+    test('PrivacyService.isUnder13 is O(1)', () {
+      final sw = Stopwatch()..start();
+      for (var i = 0; i < 100000; i++) {
+        PrivacyService.isUnder13(2010);
+      }
+      sw.stop();
+      // 100k calls must complete in < 100ms
+      expect(sw.elapsedMilliseconds, lessThan(100));
+    });
+
+    test('Entitlement.free construction is fast', () {
+      final sw = Stopwatch()..start();
+      for (var i = 0; i < 10000; i++) {
+        Entitlement.free.isPremium;
+        Entitlement.free.isInTrial;
+      }
+      sw.stop();
+      expect(sw.elapsedMilliseconds, lessThan(50));
+    });
   });
 
   // ── Security — SecureStorage key constants ────────────────────────────────

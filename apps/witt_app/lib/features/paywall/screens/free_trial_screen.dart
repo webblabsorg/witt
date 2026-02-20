@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:witt_monetization/witt_monetization.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../onboarding/onboarding_state.dart';
@@ -41,7 +42,27 @@ class FreeTrialScreen extends ConsumerWidget {
                           : WittColors.surfaceVariant,
                     ),
                   ),
-                  TextButton(onPressed: () {}, child: const Text('RESTORE')),
+                  TextButton(
+                    onPressed: () async {
+                      try {
+                        await ref
+                            .read(entitlementProvider.notifier)
+                            .hydrateFromSubrail();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Purchases restored')),
+                          );
+                        }
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Nothing to restore')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('RESTORE'),
+                  ),
                 ],
               ),
             ),

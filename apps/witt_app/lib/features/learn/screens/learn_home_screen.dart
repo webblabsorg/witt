@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 import '../data/exam_catalog.dart';
 import '../models/exam.dart';
@@ -15,11 +16,30 @@ import '../../homework/screens/homework_screen.dart';
 import '../../planner/screens/planner_screen.dart';
 import '../../offline/screens/offline_screen.dart';
 
-class LearnHomeScreen extends ConsumerWidget {
-  const LearnHomeScreen({super.key});
+class LearnHomeScreen extends ConsumerStatefulWidget {
+  const LearnHomeScreen({super.key, this.initialExamId});
+
+  /// When set (e.g. from a deep link), the screen navigates directly to the
+  /// exam hub for this exam ID after the first frame.
+  final String? initialExamId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LearnHomeScreen> createState() => _LearnHomeScreenState();
+}
+
+class _LearnHomeScreenState extends ConsumerState<LearnHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialExamId != null && widget.initialExamId!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.push('/learn/exam/${widget.initialExamId}');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final myExams = ref.watch(userExamListProvider);
     final featured = ref.watch(featuredExamsProvider);
     final theme = Theme.of(context);

@@ -49,18 +49,36 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final location = state.matchedLocation;
       final onboardingDone = onboarding.isCompleted;
+      final isAuthenticated = auth.isAuthenticated;
 
-      // If onboarding not done, keep in onboarding flow
+      // /community is an alias for /social (deep-link spec §4.4)
+      if (location == '/community') return '/social';
+
+      // If onboarding not done, preserve the intended destination as a query
+      // param so the user lands there after completing onboarding/auth.
       if (!onboardingDone) {
         if (!location.startsWith('/onboarding')) {
-          return '/onboarding/splash';
+          final dest = Uri.encodeComponent(state.uri.toString());
+          return '/onboarding/splash?from=$dest';
         }
         return null;
       }
 
       // Redirect away from onboarding screens once done
       if (onboardingDone && location.startsWith('/onboarding')) {
+        // Honour ?from= redirect if present
+        final from = state.uri.queryParameters['from'];
+        if (from != null && from.isNotEmpty) {
+          return Uri.decodeComponent(from);
+        }
         return '/home';
+      }
+
+      // Auth guard: deep links to protected routes while not authenticated
+      // send to auth screen, preserving destination.
+      if (!isAuthenticated && _requiresAuth(location)) {
+        final dest = Uri.encodeComponent(state.uri.toString());
+        return '/onboarding/auth?from=$dest';
       }
 
       // Role-based portal guards
@@ -166,6 +184,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'offline',
                     builder: (_, __) => const OfflineScreen(),
                   ),
+                  // Deep-link: witt://learn/exam/sat → exam hub for that exam
+                  GoRoute(
+                    path: 'exam/:examId',
+                    builder: (_, state) {
+                      final examId = state.pathParameters['examId'] ?? '';
+                      return LearnHomeScreen(initialExamId: examId);
+                    },
+                  ),
                 ],
               ),
             ],
@@ -220,4 +246,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 String _initialLocation(OnboardingData onboarding, AuthState auth) {
   if (!onboarding.isCompleted) return '/onboarding/splash';
   return '/home';
+}
+
+/// Routes that require an authenticated (non-anonymous) session.
+bool _requiresAuth(String location) {
+  const protected = ['/profile', '/sage', '/social', '/learn/exam'];
+  return protected.any((p) => location.startsWith(p));
 }

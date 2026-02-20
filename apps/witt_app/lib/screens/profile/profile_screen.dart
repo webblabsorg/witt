@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:witt_ui/witt_ui.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 import '../../features/progress/providers/progress_providers.dart';
@@ -43,7 +44,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
-                onPressed: () {},
+                tooltip: 'Settings',
+                onPressed: () => _showAppearanceSheet(context, ref),
               ),
             ],
           ),
@@ -600,12 +602,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://witt.app/terms'),
+                    mode: LaunchMode.externalApplication,
+                  ),
                   child: const Text('Terms of Service'),
                 ),
                 const Text('·'),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://witt.app/privacy'),
+                    mode: LaunchMode.externalApplication,
+                  ),
                   child: const Text('Privacy Policy'),
                 ),
               ],
@@ -747,35 +755,40 @@ class _MiniStat extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(
-          vertical: WittSpacing.sm,
-          horizontal: 4,
-        ),
-        decoration: BoxDecoration(
-          color: WittColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(WittSpacing.sm),
-          border: Border.all(color: WittColors.outline),
-        ),
-        child: Column(
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
+      child: Semantics(
+        label: '$value $label',
+        child: Container(
+          margin: const EdgeInsets.only(right: 6),
+          padding: const EdgeInsets.symmetric(
+            vertical: WittSpacing.sm,
+            horizontal: 4,
+          ),
+          decoration: BoxDecoration(
+            color: WittColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(WittSpacing.sm),
+            border: Border.all(color: WittColors.outline),
+          ),
+          child: Column(
+            children: [
+              ExcludeSemantics(
+                child: Text(icon, style: const TextStyle(fontSize: 16)),
               ),
-            ),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: WittColors.textSecondary,
-                fontSize: 9,
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-          ],
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: WittColors.textSecondary,
+                  fontSize: 9,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -824,44 +837,48 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(WittSpacing.sm),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: WittSpacing.sm),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+    return Semantics(
+      button: true,
+      label: '$title. $subtitle',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(WittSpacing.sm),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: WittSpacing.sm),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: iconColor),
               ),
-              child: Icon(icon, size: 18, color: iconColor),
-            ),
-            const SizedBox(width: WittSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: WittSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: WittColors.textSecondary,
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: WittColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (trailing != null) trailing!,
-          ],
+              if (trailing != null) trailing!,
+            ],
+          ),
         ),
       ),
     );
