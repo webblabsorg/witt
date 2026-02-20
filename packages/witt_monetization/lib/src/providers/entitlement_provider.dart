@@ -43,6 +43,64 @@ class EntitlementNotifier extends Notifier<Entitlement> {
     state = Entitlement.free;
   }
 
+  /// Hydrates entitlement from Subrail on app start / auth change.
+  /// Fetches live CustomerInfo and applies it — ensures cross-device consistency.
+  Future<void> hydrateFromSubrail() async {
+    try {
+      final info = await Subrail.getCustomerInfo();
+      final active = info.entitlements.active;
+
+      SubscriptionPlan plan = SubscriptionPlan.free;
+      SubscriptionStatus status = SubscriptionStatus.none;
+      DateTime? expiresAt;
+      DateTime? trialEndsAt;
+      bool isLifetime = false;
+
+      if (active.containsKey('premium_yearly') ||
+          active.containsKey('witt_premium_yearly')) {
+        plan = SubscriptionPlan.premiumYearly;
+      } else if (active.containsKey('premium_monthly') ||
+          active.containsKey('witt_premium_monthly')) {
+        plan = SubscriptionPlan.premiumMonthly;
+      } else if (active.containsKey('lifetime')) {
+        plan = SubscriptionPlan.premiumYearly;
+        isLifetime = true;
+      }
+
+      if (plan != SubscriptionPlan.free || isLifetime) {
+        final entitlement = active.values.isNotEmpty
+            ? active.values.first
+            : null;
+        if (entitlement != null) {
+          status = entitlement.periodType == PeriodType.trial
+              ? SubscriptionStatus.trial
+              : SubscriptionStatus.active;
+          if (entitlement.expirationDate != null) {
+            expiresAt = DateTime.tryParse(entitlement.expirationDate!);
+          }
+          if (entitlement.periodType == PeriodType.trial &&
+              entitlement.expirationDate != null) {
+            trialEndsAt = DateTime.tryParse(entitlement.expirationDate!);
+          }
+        } else {
+          status = SubscriptionStatus.active;
+        }
+        grant(
+          plan: plan,
+          status: status,
+          expiresAt: expiresAt,
+          trialEndsAt: trialEndsAt,
+          isLifetime: isLifetime,
+        );
+      } else {
+        // No active entitlement — ensure state reflects free
+        state = Entitlement.free;
+      }
+    } catch (_) {
+      // Network failure — retain current local state, do not downgrade
+    }
+  }
+
   /// Simulate a purchase for dev/testing.
   void devGrantPremium() {
     grant(

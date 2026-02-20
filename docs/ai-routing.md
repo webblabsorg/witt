@@ -122,6 +122,14 @@ All 5 in-memory providers are overridden at `ProviderScope` level in `main.dart`
 
 **Runtime requirement:** `SUBRAIL_API_KEY` must be set in `.env.dev` / `.env.staging` / `.env.prod`. SDK silently skips initialization if the key is missing (purchase calls will surface an error state). See `docs/env` for key location.
 
-**Remaining pre-launch work:**
-- Cross-device entitlement hydration on app start (currently only updated on purchase/restore — requires calling `Subrail.getCustomerInfo()` on auth and applying the result via `_applyCustomerInfo()`).
-- App Store / Play Store product IDs must match the identifiers configured in the Subrail dashboard (`witt_premium_monthly`, `witt_premium_yearly`, `exam_<examId>`).
+**Cross-device entitlement hydration ✅ Resolved:** `EntitlementNotifier.hydrateFromSubrail()` calls `Subrail.getCustomerInfo()` and applies the result on every sign-in and at app start. Wired in `WittApp.initState()` via `onAuthStateChange` listener. Network failures silently retain current local state (no downgrade on flaky connections).
+
+**Remaining pre-launch ops task:**
+- App Store / Play Store product IDs must match identifiers configured in the Subrail dashboard:
+
+| Product | App identifier | Subrail entitlement key |
+|---|---|---|
+| Premium Monthly | `witt_premium_monthly` | `witt_premium_monthly` or `premium_monthly` |
+| Premium Yearly | `witt_premium_yearly` | `witt_premium_yearly` or `premium_yearly` |
+| Exam unlock | `exam_<examId>` | — (handled via `unlockExam()` locally) |
+| Lifetime | `lifetime` | `lifetime` |
