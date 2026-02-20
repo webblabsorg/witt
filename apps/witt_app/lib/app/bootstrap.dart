@@ -79,7 +79,9 @@ class Bootstrap {
 
     // Initialize Mixpanel analytics
     final mixpanelToken = dotenv.env['MIXPANEL_TOKEN'] ?? '';
-    if (mixpanelToken.isNotEmpty) {
+    final mixpanelValid =
+        mixpanelToken.isNotEmpty && !mixpanelToken.startsWith('your-');
+    if (mixpanelValid) {
       _mixpanel = await Mixpanel.init(
         mixpanelToken,
         optOutTrackingDefault: false,
@@ -90,7 +92,9 @@ class Bootstrap {
 
     // Initialize OneSignal push notifications
     final oneSignalAppId = dotenv.env['ONESIGNAL_APP_ID'] ?? '';
-    if (oneSignalAppId.isNotEmpty) {
+    final oneSignalValid =
+        oneSignalAppId.isNotEmpty && !oneSignalAppId.startsWith('your-');
+    if (oneSignalValid) {
       OneSignal.initialize(oneSignalAppId);
       await OneSignal.Notifications.requestPermission(true);
     }
@@ -102,8 +106,12 @@ class Bootstrap {
 
     // Initialize Sentry last — wraps runApp so all Flutter errors are captured.
     final sentryDsn = dotenv.env['SENTRY_DSN'] ?? '';
+    final sentryValid =
+        sentryDsn.isNotEmpty && !sentryDsn.contains('your-sentry');
     await SentryFlutter.init((options) {
-      options.dsn = sentryDsn; // empty string = disabled (no-op)
+      options.dsn = sentryValid
+          ? sentryDsn
+          : ''; // empty string = disabled (no-op)
       options.tracesSampleRate = kDebugMode ? 0.0 : 1.0;
       options.environment = env;
       options.debug = kDebugMode;
