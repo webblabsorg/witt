@@ -44,13 +44,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         auth.status == AuthStatus.authenticated ||
         auth.status == AuthStatus.anonymous;
     if (isSignedIn && onboarding.isCompleted) return '/home';
-    if (auth.status == AuthStatus.authenticated && !onboarding.isCompleted) {
-      // Returning authenticated user who never finished paywall — auto-complete
-      // so they don't re-run the full wizard every time.
-      ref.read(onboardingProvider.notifier).complete();
-      return '/home';
-    }
-    return '/onboarding/language';
+    return '/onboarding/auth';
   }
 
   @override
@@ -551,7 +545,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               top: WittSpacing.lg,
               right: WittSpacing.lg,
               child: TextButton(
-                onPressed: () => context.go('/onboarding/language'),
+                onPressed: () => context.go('/onboarding/auth'),
                 child: Text(
                   'Skip',
                   style: theme.textTheme.labelLarge?.copyWith(
@@ -583,7 +577,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                     child: _currentPage == _slides.length - 1
                         ? WittButton(
                             label: 'Get Started',
-                            onPressed: () => context.go('/onboarding/language'),
+                            onPressed: () => context.go('/onboarding/auth'),
                             isFullWidth: true,
                             size: WittButtonSize.lg,
                           )

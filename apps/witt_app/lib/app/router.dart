@@ -5,9 +5,7 @@ import 'bootstrap.dart';
 import 'scaffold_with_nav.dart';
 import '../features/onboarding/onboarding_state.dart';
 import '../features/onboarding/screens/splash_screen.dart' show SplashScreen;
-import '../features/onboarding/screens/language_picker_screen.dart';
-import '../features/onboarding/screens/onboarding_intro_screen.dart';
-import '../features/onboarding/screens/wizard_screen.dart';
+// import '../features/onboarding/screens/language_picker_screen.dart'; // Removed: English-only launch
 import '../features/auth/auth_state.dart';
 import '../features/auth/screens/auth_screen.dart';
 import '../features/auth/screens/email_auth_screen.dart';
@@ -29,7 +27,6 @@ import '../screens/profile/profile_screen.dart';
 import '../features/progress/screens/progress_screen.dart';
 import '../features/teacher/screens/teacher_screen.dart';
 import '../features/teacher/screens/parent_screen.dart';
-import '../features/translation/screens/translation_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
@@ -63,6 +60,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       queryParameters: state.uri.queryParameters,
     ),
     routes: [
+      GoRoute(path: '/', redirect: (_, __) => '/onboarding/splash'),
       // ── Onboarding flow (outside shell) ──────────────────────────────────
       GoRoute(
         path: '/onboarding/splash',
@@ -70,22 +68,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/onboarding/carousel',
-        redirect: (_, __) => '/onboarding/language',
+        redirect: (_, __) => '/onboarding/auth',
       ),
       GoRoute(
         path: '/onboarding/language',
-        builder: (_, __) => const LanguagePickerScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding/intro',
-        builder: (_, __) => const OnboardingIntroScreen(),
+        redirect: (_, __) => '/onboarding/auth',
       ),
       GoRoute(
         path: '/onboarding/wizard/:step',
-        builder: (_, state) {
-          final step = int.tryParse(state.pathParameters['step'] ?? '1') ?? 1;
-          return WizardScreen(step: step);
-        },
+        redirect: (_, __) => '/onboarding/auth',
       ),
       GoRoute(
         path: '/onboarding/auth',
@@ -137,10 +128,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'notifications',
                     builder: (_, __) => const NotificationsScreen(),
-                  ),
-                  GoRoute(
-                    path: 'translate',
-                    builder: (_, __) => const TranslationScreen(),
                   ),
                 ],
               ),
@@ -230,6 +217,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 String _initialLocation(OnboardingData onboarding, AuthState auth) {
+  final isSignedIn =
+      auth.status == AuthStatus.authenticated ||
+      auth.status == AuthStatus.anonymous;
+  if (isSignedIn && onboarding.isCompleted) return '/home';
   return '/onboarding/splash';
 }
 
@@ -264,19 +255,54 @@ String? computeRedirect({
   required AuthState auth,
   Map<String, String> queryParameters = const {},
 }) {
-  final onboardingDone = onboarding.isCompleted;
+  final isSignedIn =
+      auth.status == AuthStatus.authenticated ||
+      auth.status == AuthStatus.anonymous;
+  final onboardingDone = onboarding.isCompleted && isSignedIn;
+  final inOnboardingFlow = location.startsWith('/onboarding');
+  final inAuthOrPaywall =
+      location.startsWith('/onboarding/auth') ||
+      location.startsWith('/onboarding/paywall') ||
+      location.startsWith('/onboarding/feature-comparison') ||
+      location.startsWith('/onboarding/free-trial');
 
   if (location == '/community') return '/social';
 
+  // Returning signed-in user with completed onboarding/paywall: go straight home.
+  if (isSignedIn && onboarding.isCompleted && inOnboardingFlow) {
+    return '/home';
+  }
+
+  // Signed-in but not completed paywall flow: keep inside onboarding stream.
+  if (isSignedIn && !onboarding.isCompleted && !inOnboardingFlow) {
+    return '/onboarding/paywall';
+  }
+
+  // Not signed in users should always use onboarding/auth/paywall stream.
+  if (!isSignedIn && !inOnboardingFlow) {
+    final dest = Uri.encodeComponent(fullUri);
+    return '/onboarding/splash?from=$dest';
+  }
+
   if (!onboardingDone) {
-    if (!location.startsWith('/onboarding')) {
+    if (!inOnboardingFlow) {
       final dest = Uri.encodeComponent(fullUri);
       return '/onboarding/splash?from=$dest';
     }
     return null;
   }
 
-  if (onboardingDone && location.startsWith('/onboarding')) {
+  // Allow auth/paywall routes while user is unauthenticated to prevent loops.
+  if (!isSignedIn && inAuthOrPaywall) {
+    return null;
+  }
+
+  if (onboardingDone && inOnboardingFlow) {
+    // Keep explicit auth/paywall flows reachable even after onboarding is done,
+    // otherwise redirects can loop (e.g., /profile -> /onboarding/auth -> /profile).
+    if (inAuthOrPaywall) {
+      return null;
+    }
     if (location == '/onboarding/splash') {
       return null;
     }

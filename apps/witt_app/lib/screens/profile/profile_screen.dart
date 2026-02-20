@@ -10,7 +10,6 @@ import '../../features/learn/providers/test_prep_providers.dart';
 import '../../features/auth/auth_state.dart';
 import '../../features/onboarding/onboarding_state.dart';
 import '../../core/providers/theme_provider.dart';
-import '../../core/providers/locale_provider.dart';
 import '../../core/security/privacy_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -264,14 +263,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   // ── Section: Tools ─────────────────────────────────
                   _SectionHeader(title: 'Tools'),
-                  _ActionTile(
-                    icon: Icons.translate_rounded,
-                    iconColor: const Color(0xFF0891B2),
-                    title: 'Translate',
-                    subtitle: 'Translate study content to any language',
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/home/translate'),
-                  ),
+                  // Translation tool removed for English-only US launch.
 
                   // ── Section: Portals (role-based) ──────────────────
                   if (role == 'teacher') ...[
@@ -356,14 +348,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _showAppearanceSheet(context, ref),
                   ),
-                  _ActionTile(
-                    icon: Icons.language_rounded,
-                    iconColor: const Color(0xFF059669),
-                    title: 'App Language',
-                    subtitle: 'Change interface language',
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _showLanguageSheet(context, ref),
-                  ),
+                  // App Language tile removed for English-only US launch.
+                  // Re-enable when multi-language support is restored:
+                  // _ActionTile(
+                  //   icon: Icons.language_rounded,
+                  //   iconColor: const Color(0xFF059669),
+                  //   title: 'App Language',
+                  //   subtitle: 'Change interface language',
+                  //   trailing: const Icon(Icons.chevron_right),
+                  //   onTap: () => _showLanguageSheet(context, ref),
+                  // ),
 
                   // ── Section: Support ───────────────────────────────
                   _SectionHeader(title: 'Support'),
@@ -474,52 +468,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showLanguageSheet(BuildContext context, WidgetRef ref) {
-    final current = ref.read(localeProvider).languageCode;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.55,
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(WittSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'App Language',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: WittSpacing.lg),
-            Expanded(
-              child: ListView(
-                children: appLocales.map((l) {
-                  final selected = l.code == current;
-                  return ListTile(
-                    title: Text(l.name),
-                    trailing: selected
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: WittColors.primary,
-                          )
-                        : null,
-                    onTap: () {
-                      ref.read(localeProvider.notifier).setLocale(l.code);
-                      Navigator.pop(context);
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // _showLanguageSheet removed for English-only US launch.
+  // Re-enable when multi-language support is restored.
 
   void _showHelpSheet(BuildContext context) {
     showModalBottomSheet(

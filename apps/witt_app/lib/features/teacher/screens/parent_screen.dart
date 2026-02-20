@@ -283,9 +283,8 @@ class _ChildCard extends StatelessWidget {
         // Report button
         WittButton(
           label: 'Download Progress Report',
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Report export — coming soon')),
-          ),
+          // Report export not yet wired.
+          onPressed: () {},
           variant: WittButtonVariant.outline,
           icon: Icons.download_rounded,
         ),

@@ -182,3 +182,8 @@ These **cannot** be automated — they require your accounts/devices:
 6. **Push notification cold-start test** — send a test push from OneSignal dashboard with a deep-link payload
 7. **Subrail sandbox receipt test** — requires sandbox IAP purchase on device
 8. **Subrail sandbox receipt test** — requires sandbox IAP purchase on device (duplicate removed)
+
+----
+
+
+demo/sample/placeholder content still exists in multiple areas

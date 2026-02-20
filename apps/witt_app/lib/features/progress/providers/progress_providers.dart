@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/progress_models.dart';
 import '../../learn/providers/exam_providers.dart';
-import '../../quiz/providers/quiz_providers.dart';
 
 // ── Streak tracking ───────────────────────────────────────────────────────
 
@@ -196,7 +195,6 @@ final progressSummaryProvider = Provider<ProgressSummary>((ref) {
   final level = ref.watch(levelProvider);
   final badges = ref.watch(badgeProvider);
   final proficiency = ref.watch(userProficiencyProvider);
-  final quizHistory = ref.watch(quizHistoryProvider);
   final myExams = ref.watch(myExamsProvider);
 
   final totalQ = activity.values.fold<int>(
@@ -251,11 +249,6 @@ final progressSummaryProvider = Provider<ProgressSummary>((ref) {
           [],
     );
   }).toList();
-
-  // If no real data yet, show sample data for onboarding
-  if (totalQ == 0 && quizHistory.isEmpty) {
-    return ProgressSummary.sample();
-  }
 
   return ProgressSummary(
     streak: streak,

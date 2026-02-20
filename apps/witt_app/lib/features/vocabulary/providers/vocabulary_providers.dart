@@ -90,7 +90,7 @@ final dictionarySearchProvider =
 
 class SavedWordsNotifier extends Notifier<List<VocabWord>> {
   @override
-  List<VocabWord> build() => _sampleSavedWords;
+  List<VocabWord> build() => [];
 
   void saveWord(VocabWord word) {
     if (state.any((w) => w.id == word.id)) return;
@@ -138,7 +138,7 @@ final savedWordsProvider =
 
 class VocabListNotifier extends Notifier<List<VocabList>> {
   @override
-  List<VocabList> build() => _sampleVocabLists;
+  List<VocabList> build() => [];
 
   void createList(VocabList list) {
     state = [list, ...state];
@@ -307,31 +307,3 @@ final List<VocabWord> _localDictionary = [
   ),
 ];
 
-final List<VocabWord> _sampleSavedWords = [
-  _localDictionary[1], // ephemeral
-  _localDictionary[2], // ubiquitous
-  _localDictionary[3], // ameliorate
-];
-
-final List<VocabList> _sampleVocabLists = [
-  VocabList(
-    id: 'vlist_sat',
-    name: 'SAT Vocabulary',
-    userId: 'local_user',
-    description: 'High-frequency SAT words',
-    emoji: '📖',
-    examId: 'sat',
-    wordIds: const ['word_ephemeral', 'word_ubiquitous', 'word_ameliorate'],
-    createdAt: DateTime.now().subtract(const Duration(days: 7)),
-  ),
-  VocabList(
-    id: 'vlist_ielts',
-    name: 'IELTS Academic Words',
-    userId: 'local_user',
-    description: 'Academic word list for IELTS',
-    emoji: '🌐',
-    examId: 'ielts',
-    wordIds: const ['word_ubiquitous', 'word_verbose'],
-    createdAt: DateTime.now().subtract(const Duration(days: 3)),
-  ),
-];

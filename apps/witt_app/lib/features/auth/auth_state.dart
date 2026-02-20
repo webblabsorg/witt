@@ -164,6 +164,12 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  /// Local guest mode fallback when Supabase anonymous auth is disabled.
+  /// This enables the onboarding/paywall flow without hard failing on Skip.
+  Future<void> continueAsGuest() async {
+    state = const AuthState(status: AuthStatus.anonymous);
+  }
+
   Future<void> signOut() async {
     NotificationService.clearUser();
     await SecureStorage.clearTokens();

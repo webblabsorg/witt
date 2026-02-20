@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
-
-import '../../onboarding/onboarding_state.dart';
 import '../../../core/currency/currency_provider.dart';
 
 class FeatureComparisonScreen extends ConsumerWidget {
@@ -46,10 +44,7 @@ class FeatureComparisonScreen extends ConsumerWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    onPressed: () async {
-                      await ref.read(onboardingProvider.notifier).complete();
-                      if (context.mounted) context.go('/home');
-                    },
+                    onPressed: () => context.push('/onboarding/free-trial'),
                     style: IconButton.styleFrom(
                       backgroundColor: isDark
                           ? WittColors.surfaceVariantDark

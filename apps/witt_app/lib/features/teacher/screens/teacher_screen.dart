@@ -160,11 +160,8 @@ class _TeacherScreenState extends ConsumerState<TeacherScreen>
     );
   }
 
-  void _showCreateClass(BuildContext context) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Create Class — coming soon')));
-  }
+  // Create class action — not yet implemented.
+  void _showCreateClass(BuildContext context) {}
 }
 
 // ── Roster Tab ────────────────────────────────────────────────────────────

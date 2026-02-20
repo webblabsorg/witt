@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:witt_monetization/witt_monetization.dart';
 import 'package:witt_ui/witt_ui.dart';
-
-import '../../onboarding/onboarding_state.dart';
 import '../../../core/currency/currency_provider.dart';
 
 class PaywallScreen extends ConsumerWidget {
@@ -120,10 +118,7 @@ class PaywallScreen extends ConsumerWidget {
                 ctaLabel: 'Continue with Free',
                 ctaVariant: WittButtonVariant.outline,
                 isLoading: false,
-                onTap: () async {
-                  await ref.read(onboardingProvider.notifier).complete();
-                  if (context.mounted) context.go('/home');
-                },
+                onTap: () => context.push('/onboarding/feature-comparison'),
               ),
               const SizedBox(height: WittSpacing.lg),
 
@@ -147,9 +142,7 @@ class PaywallScreen extends ConsumerWidget {
                 isLoading: isLoading && purchaseFlow.productId == monthly.id,
                 onTap: isLoading
                     ? null
-                    : () => ref
-                          .read(purchaseFlowProvider.notifier)
-                          .purchase(monthly),
+                    : () => context.push('/onboarding/feature-comparison'),
               ),
               const SizedBox(height: WittSpacing.lg),
 
@@ -171,9 +164,7 @@ class PaywallScreen extends ConsumerWidget {
                 isLoading: isLoading && purchaseFlow.productId == yearly.id,
                 onTap: isLoading
                     ? null
-                    : () => ref
-                          .read(purchaseFlowProvider.notifier)
-                          .purchase(yearly),
+                    : () => context.push('/onboarding/feature-comparison'),
               ),
               const SizedBox(height: WittSpacing.xxl),
 

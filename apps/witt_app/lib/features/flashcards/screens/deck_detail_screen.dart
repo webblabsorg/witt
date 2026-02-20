@@ -38,21 +38,21 @@ class DeckDetailScreen extends ConsumerWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      deckColor,
-                      deckColor.withValues(alpha: 0.7),
-                    ],
+                    colors: [deckColor, deckColor.withValues(alpha: 0.7)],
                   ),
                 ),
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        WittSpacing.lg, 56, WittSpacing.lg, WittSpacing.lg),
+                      WittSpacing.lg,
+                      56,
+                      WittSpacing.lg,
+                      WittSpacing.lg,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(deck.emoji,
-                            style: const TextStyle(fontSize: 40)),
+                        Text(deck.emoji, style: const TextStyle(fontSize: 40)),
                         const SizedBox(height: WittSpacing.xs),
                         Text(
                           deck.name,
@@ -91,9 +91,12 @@ class DeckDetailScreen extends ConsumerWidget {
                   PopupMenuItem(value: 'export', child: Text('Export CSV')),
                   PopupMenuItem(value: 'shuffle', child: Text('Shuffle deck')),
                   PopupMenuItem(
-                      value: 'reset',
-                      child: Text('Reset progress',
-                          style: TextStyle(color: WittColors.error))),
+                    value: 'reset',
+                    child: Text(
+                      'Reset progress',
+                      style: TextStyle(color: WittColors.error),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -106,7 +109,10 @@ class DeckDetailScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   _StatBox(
-                      label: 'Total', value: '${cards.length}', icon: Icons.style),
+                    label: 'Total',
+                    value: '${cards.length}',
+                    icon: Icons.style,
+                  ),
                   const SizedBox(width: WittSpacing.sm),
                   _StatBox(
                     label: 'Due',
@@ -137,7 +143,11 @@ class DeckDetailScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  WittSpacing.lg, 0, WittSpacing.lg, WittSpacing.md),
+                WittSpacing.lg,
+                0,
+                WittSpacing.lg,
+                WittSpacing.md,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -173,7 +183,11 @@ class DeckDetailScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
-                  WittSpacing.lg, 0, WittSpacing.lg, WittSpacing.sm),
+                WittSpacing.lg,
+                0,
+                WittSpacing.lg,
+                WittSpacing.sm,
+              ),
               child: Row(
                 children: [
                   Text(
@@ -226,49 +240,45 @@ class DeckDetailScreen extends ConsumerWidget {
   }
 
   void _startStudy(
-      BuildContext context, StudyMode mode, List<Flashcard> cards) {
+    BuildContext context,
+    StudyMode mode,
+    List<Flashcard> cards,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => StudyScreen(
-          deckId: deckId,
-          mode: mode,
-          cards: cards,
-        ),
+        builder: (_) => StudyScreen(deckId: deckId, mode: mode, cards: cards),
       ),
     );
   }
 
   void _addCard(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AddCardScreen(deckId: deckId),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => AddCardScreen(deckId: deckId)));
   }
 
   void _handleMenu(BuildContext context, WidgetRef ref, String action) {
     switch (action) {
       case 'export':
-        final csv =
-            ref.read(cardListProvider.notifier).exportToCsv(deckId);
+        final csv = ref.read(cardListProvider.notifier).exportToCsv(deckId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Exported ${csv.split('\n').length} cards')),
         );
       case 'import':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Import CSV — file picker coming soon')),
-        );
+        // CSV import not yet wired.
+        break;
       case 'shuffle':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Deck shuffled')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Deck shuffled')));
       case 'reset':
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Reset progress?'),
             content: const Text(
-                'All SM-2 scheduling data will be reset. Cards will start fresh.'),
+              'All SM-2 scheduling data will be reset. Cards will start fresh.',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
@@ -281,8 +291,7 @@ class DeckDetailScreen extends ConsumerWidget {
                     const SnackBar(content: Text('Progress reset')),
                   );
                 },
-                child: Text('Reset',
-                    style: TextStyle(color: WittColors.error)),
+                child: Text('Reset', style: TextStyle(color: WittColors.error)),
               ),
             ],
           ),
@@ -311,7 +320,9 @@ class _StatBox extends StatelessWidget {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: WittSpacing.xs, vertical: WittSpacing.sm),
+          horizontal: WittSpacing.xs,
+          vertical: WittSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: c.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(WittSpacing.xs),
@@ -419,7 +430,11 @@ class _CardTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          WittSpacing.lg, 0, WittSpacing.lg, WittSpacing.sm),
+        WittSpacing.lg,
+        0,
+        WittSpacing.lg,
+        WittSpacing.sm,
+      ),
       child: Container(
         padding: const EdgeInsets.all(WittSpacing.md),
         decoration: BoxDecoration(
@@ -480,7 +495,9 @@ class _CardTile extends StatelessWidget {
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 2),
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: WittColors.secondaryContainer,
                             borderRadius: BorderRadius.circular(4),
@@ -499,7 +516,9 @@ class _CardTile extends StatelessWidget {
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 2),
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: WittColors.successContainer,
                             borderRadius: BorderRadius.circular(4),
@@ -520,8 +539,11 @@ class _CardTile extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline,
-                  size: 18, color: WittColors.textTertiary),
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: WittColors.textTertiary,
+              ),
               onPressed: onDelete,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),

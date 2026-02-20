@@ -1,23 +1,22 @@
 import '../models/exam.dart';
 import 'exam_catalog_us.dart';
-import 'exam_catalog_africa.dart';
-import 'exam_catalog_uk.dart';
-import 'exam_catalog_india.dart';
-import 'exam_catalog_global.dart';
+// 🌍 Non-US catalogs — commented out for US-only launch. Re-enable per region when expanding.
+// import 'exam_catalog_africa.dart';
+// import 'exam_catalog_uk.dart';
+// import 'exam_catalog_india.dart';
+// import 'exam_catalog_global.dart';
 
-/// Complete exam catalog — 30 exams across US, Africa, UK, India, and Global.
+/// Active exam catalog — US only for launch.
 final List<Exam> allExams = [
   ...usExams,
-  ...africaExams,
-  ...ukExams,
-  ...indiaExams,
-  ...globalExams,
+  // ...africaExams,
+  // ...ukExams,
+  // ...indiaExams,
+  // ...globalExams,
 ];
 
 /// Lookup map for O(1) access by exam ID.
-final Map<String, Exam> examById = {
-  for (final exam in allExams) exam.id: exam,
-};
+final Map<String, Exam> examById = {for (final exam in allExams) exam.id: exam};
 
 /// Exams grouped by region.
 Map<ExamRegion, List<Exam>> get examsByRegion {
@@ -28,17 +27,17 @@ Map<ExamRegion, List<Exam>> get examsByRegion {
   return map;
 }
 
-/// Featured exams shown on the Learn tab home.
+/// Featured exams shown on the Learn tab home — US only.
 final List<String> featuredExamIds = [
   'sat',
-  'waec',
-  'jamb',
-  'ielts',
-  'jee_main',
-  'a_levels',
+  'act',
   'gre',
-  'neet_ug',
+  'gmat',
+  'lsat',
+  'mcat',
+  'ap',
+  'ged',
 ];
 
 List<Exam> get featuredExams =>
-    featuredExamIds.map((id) => examById[id]!).toList();
+    featuredExamIds.map((id) => examById[id]).whereType<Exam>().toList();

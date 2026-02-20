@@ -35,22 +35,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add_outlined),
-            tooltip: 'Add Friend',
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Add Friend — coming soon')),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.search_rounded),
-            tooltip: 'Search community',
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Community search — coming soon')),
-            ),
-          ),
-        ],
+        actions: const [],
         bottom: TabBar(
           controller: _tab,
           labelStyle: const TextStyle(
@@ -88,32 +73,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               foregroundColor: Colors.white,
             ),
           ),
-          1 => Semantics(
-            button: true,
-            label: 'Create new group',
-            child: FloatingActionButton.extended(
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Create group — coming soon')),
-              ),
-              icon: const Icon(Icons.group_add_rounded),
-              label: const Text('New Group'),
-              backgroundColor: WittColors.secondary,
-              foregroundColor: Colors.white,
-            ),
-          ),
-          2 => Semantics(
-            button: true,
-            label: 'Ask a question',
-            child: FloatingActionButton.extended(
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ask question — coming soon')),
-              ),
-              icon: const Icon(Icons.help_outline_rounded),
-              label: const Text('Ask'),
-              backgroundColor: WittColors.accent,
-              foregroundColor: Colors.white,
-            ),
-          ),
+          // Groups and Forum FABs removed for production launch.
           _ => const SizedBox.shrink(),
         },
       ),

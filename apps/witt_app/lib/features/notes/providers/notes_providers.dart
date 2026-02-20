@@ -8,7 +8,7 @@ class NoteListNotifier extends Notifier<List<Note>> {
   static const int freeWordLimit = 2000;
 
   @override
-  List<Note> build() => _sampleNotes;
+  List<Note> build() => [];
 
   void createNote(Note note) {
     state = [note, ...state];
@@ -196,97 +196,3 @@ final noteEditorProvider =
     NotifierProviderFamily<NoteEditorNotifier, NoteEditorState?, String>(
       NoteEditorNotifier.new,
     );
-
-// ── Sample data ───────────────────────────────────────────────────────────
-
-final List<Note> _sampleNotes = [
-  Note(
-    id: 'note_1',
-    userId: 'local_user',
-    title: 'SAT Math — Key Formulas',
-    content: '''# SAT Math Key Formulas
-
-## Algebra
-- Quadratic formula: x = (-b ± √(b²-4ac)) / 2a
-- Slope: m = (y₂-y₁)/(x₂-x₁)
-- Distance: d = √((x₂-x₁)² + (y₂-y₁)²)
-
-## Geometry
-- Circle area: A = πr²
-- Cylinder volume: V = πr²h
-- Pythagorean theorem: a² + b² = c²
-
-## Statistics
-- Mean = sum / count
-- Median = middle value
-- Mode = most frequent value''',
-    format: NoteFormat.markdown,
-    template: NoteTemplate.studyGuide,
-    examId: 'sat',
-    subject: 'Mathematics',
-    wordCount: 87,
-    isPinned: true,
-    createdAt: DateTime.now().subtract(const Duration(days: 5)),
-    updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
-  ),
-  Note(
-    id: 'note_2',
-    userId: 'local_user',
-    title: 'WAEC Biology — Cell Structure',
-    content: '''# Cell Structure Notes
-
-## Animal Cell Organelles
-- **Nucleus**: Controls cell activities, contains DNA
-- **Mitochondria**: ATP production (powerhouse)
-- **Ribosomes**: Protein synthesis
-- **Endoplasmic Reticulum**: Transport network
-- **Golgi Apparatus**: Packaging and secretion
-
-## Plant Cell (additional)
-- **Cell Wall**: Rigid structure, cellulose
-- **Chloroplasts**: Photosynthesis
-- **Large Vacuole**: Water storage and support
-
-## Key Differences
-| Feature | Animal | Plant |
-|---------|--------|-------|
-| Cell wall | No | Yes |
-| Chloroplasts | No | Yes |
-| Vacuole | Small | Large |''',
-    format: NoteFormat.markdown,
-    template: NoteTemplate.cornell,
-    examId: 'waec',
-    subject: 'Biology',
-    wordCount: 112,
-    isFavorite: true,
-    createdAt: DateTime.now().subtract(const Duration(days: 3)),
-    updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-  ),
-  Note(
-    id: 'note_3',
-    userId: 'local_user',
-    title: "JEE Physics — Newton's Laws",
-    content: '''# Newton's Laws of Motion
-
-## First Law (Inertia)
-An object at rest stays at rest, and an object in motion stays in motion, unless acted upon by an external force.
-
-## Second Law
-F = ma
-Force = mass × acceleration
-
-## Third Law
-For every action, there is an equal and opposite reaction.
-
-## Applications
-- Rocket propulsion (3rd law)
-- Car braking (1st law)
-- Weight on a scale (2nd law)''',
-    format: NoteFormat.markdown,
-    examId: 'jee_main',
-    subject: 'Physics',
-    wordCount: 89,
-    createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    updatedAt: DateTime.now().subtract(const Duration(hours: 6)),
-  ),
-];

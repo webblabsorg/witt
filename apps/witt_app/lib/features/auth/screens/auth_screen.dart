@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../auth_state.dart';
-import '../../onboarding/onboarding_state.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -17,23 +16,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
   String? _error;
 
-  /// Returns the post-auth destination: honours ?from= if present, otherwise
-  /// falls through to the paywall so new users see the subscription offer.
+  /// Post-auth destination is always paywall stream.
   String _postAuthDestination() {
-    final from = GoRouterState.of(context).uri.queryParameters['from'];
-    if (from != null && from.isNotEmpty) {
-      return Uri.decodeComponent(from);
-    }
     return '/onboarding/paywall';
-  }
-
-  String _roleDashboardDestination() {
-    final role = ref.read(onboardingProvider).role;
-    return switch (role) {
-      'teacher' => '/profile/teacher',
-      'parent' => '/profile/parent',
-      _ => '/home',
-    };
   }
 
   Future<void> _handleResult(
@@ -200,16 +185,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ),
                 ),
 
-                // Skip — no auth required
+                // Skip login — continue to paywall stream as guest
                 WittButton(
                   label: 'Skip for now',
                   variant: WittButtonVariant.outline,
-                  onPressed: () async {
-                    final dest = _roleDashboardDestination();
-                    await ref.read(onboardingProvider.notifier).complete();
-                    // ignore: use_build_context_synchronously
-                    if (mounted) context.go(dest);
-                  },
+                  onPressed: () => _handleResult(
+                    () => ref
+                        .read(authNotifierProvider.notifier)
+                        .continueAsGuest(),
+                    destination: '/onboarding/paywall',
+                  ),
                   isFullWidth: true,
                   size: WittButtonSize.lg,
                 ),

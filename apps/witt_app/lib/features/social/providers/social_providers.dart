@@ -6,285 +6,12 @@ import '../../../core/persistence/hive_boxes.dart';
 import '../../../core/analytics/analytics.dart';
 import '../../../core/notifications/notification_service.dart';
 
-// ── Sample data ───────────────────────────────────────────────────────────
-
-final _samplePosts = [
-  SocialPost(
-    id: 'p1',
-    authorId: 'u1',
-    authorName: 'Amara Osei',
-    authorAvatar: 'AO',
-    content:
-        'Just scored 1480 on my SAT practice test! The AI-generated questions really helped me focus on weak areas. Who else is prepping for SAT 2026? 🎯',
-    type: PostType.text,
-    likes: 47,
-    commentCount: 12,
-    createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-    tags: ['SAT', 'TestPrep'],
-  ),
-  SocialPost(
-    id: 'p2',
-    authorId: 'u2',
-    authorName: 'Priya Sharma',
-    authorAvatar: 'PS',
-    content:
-        'Sharing my GRE Vocabulary deck — 500 high-frequency words with mnemonics. Free to download in the Marketplace! 📚',
-    type: PostType.resource,
-    likes: 134,
-    commentCount: 28,
-    createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-    tags: ['GRE', 'Vocabulary', 'Flashcards'],
-  ),
-  SocialPost(
-    id: 'p3',
-    authorId: 'u3',
-    authorName: 'Kwame Mensah',
-    authorAvatar: 'KM',
-    content:
-        'Quick tip for WAEC Chemistry: focus on organic reactions and periodic trends. They come up every year. Good luck to everyone writing next month! 🧪',
-    type: PostType.text,
-    likes: 89,
-    commentCount: 19,
-    createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-    groupId: 'g2',
-    groupName: 'WAEC Science Squad',
-    tags: ['WAEC', 'Chemistry'],
-  ),
-  SocialPost(
-    id: 'p4',
-    authorId: 'u4',
-    authorName: 'Sofia Reyes',
-    authorAvatar: 'SR',
-    content:
-        'Does anyone have good resources for IELTS Writing Task 2? I keep struggling with coherence and cohesion. Any tips? 🙏',
-    type: PostType.question,
-    likes: 23,
-    commentCount: 41,
-    createdAt: DateTime.now().subtract(const Duration(hours: 12)),
-    tags: ['IELTS', 'Writing'],
-  ),
-  SocialPost(
-    id: 'p5',
-    authorId: 'u5',
-    authorName: 'Aditya Kumar',
-    authorAvatar: 'AK',
-    content:
-        'Study streak: 30 days! 🔥 Consistency is everything. Even 20 minutes a day adds up. Keep going everyone!',
-    type: PostType.text,
-    likes: 201,
-    commentCount: 34,
-    createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    tags: ['Motivation', 'Streak'],
-  ),
-];
-
-final _sampleGroups = [
-  const StudyGroup(
-    id: 'g1',
-    name: 'SAT Math Masters',
-    description:
-        'Daily practice problems, tips, and peer support for SAT Math.',
-    memberCount: 1247,
-    subject: 'Mathematics',
-    examTag: 'SAT',
-    isPublic: true,
-    coverEmoji: '📐',
-    isJoined: true,
-    role: GroupRole.member,
-  ),
-  const StudyGroup(
-    id: 'g2',
-    name: 'WAEC Science Squad',
-    description:
-        'Physics, Chemistry, Biology — all WAEC science subjects covered.',
-    memberCount: 892,
-    subject: 'Science',
-    examTag: 'WAEC',
-    isPublic: true,
-    coverEmoji: '🧪',
-  ),
-  const StudyGroup(
-    id: 'g3',
-    name: 'GRE Verbal Prep',
-    description:
-        'Vocabulary, reading comprehension, and text completion strategies.',
-    memberCount: 634,
-    subject: 'English',
-    examTag: 'GRE',
-    isPublic: true,
-    coverEmoji: '📖',
-  ),
-  const StudyGroup(
-    id: 'g4',
-    name: 'IELTS Writing Workshop',
-    description: 'Essay feedback, band score tips, and writing practice.',
-    memberCount: 445,
-    subject: 'English',
-    examTag: 'IELTS',
-    isPublic: true,
-    coverEmoji: '✍️',
-  ),
-  const StudyGroup(
-    id: 'g5',
-    name: 'JAMB 2026 Prep',
-    description: 'All subjects, past questions, and study schedules for JAMB.',
-    memberCount: 2103,
-    subject: 'General',
-    examTag: 'JAMB',
-    isPublic: true,
-    coverEmoji: '🎓',
-    isJoined: true,
-    role: GroupRole.member,
-  ),
-];
-
-final _sampleQuestions = [
-  ForumQuestion(
-    id: 'q1',
-    authorId: 'u6',
-    authorName: 'Fatima Al-Hassan',
-    authorAvatar: 'FA',
-    title: 'How do I approach SAT Evidence-Based Reading passages?',
-    body:
-        'I always run out of time on the reading section. Should I read the passage first or go straight to the questions?',
-    votes: 34,
-    answerCount: 8,
-    createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-    tags: ['SAT', 'Reading', 'Strategy'],
-    isAnswered: true,
-  ),
-  ForumQuestion(
-    id: 'q2',
-    authorId: 'u7',
-    authorName: 'Liam O\'Brien',
-    authorAvatar: 'LO',
-    title: 'GRE Quant — is a calculator allowed?',
-    body:
-        'I\'ve seen conflicting information online. Can someone clarify what tools are available during the GRE Quant section?',
-    votes: 21,
-    answerCount: 5,
-    createdAt: DateTime.now().subtract(const Duration(hours: 6)),
-    tags: ['GRE', 'Quant'],
-    isAnswered: true,
-  ),
-  ForumQuestion(
-    id: 'q3',
-    authorId: 'u8',
-    authorName: 'Yuki Tanaka',
-    authorAvatar: 'YT',
-    title: 'Best strategy for IELTS Listening Section 4?',
-    body:
-        'Section 4 is a monologue and I find it the hardest. Any tips for note-taking and predicting answers?',
-    votes: 15,
-    answerCount: 3,
-    createdAt: DateTime.now().subtract(const Duration(hours: 10)),
-    tags: ['IELTS', 'Listening'],
-    isAnswered: false,
-  ),
-  ForumQuestion(
-    id: 'q4',
-    authorId: 'u9',
-    authorName: 'Chidi Okafor',
-    authorAvatar: 'CO',
-    title: 'WAEC Biology — how many past questions should I practice?',
-    body:
-        'I have 10 years of past questions. Is that enough or should I go further back? What\'s the pattern?',
-    votes: 28,
-    answerCount: 11,
-    createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    tags: ['WAEC', 'Biology'],
-    isAnswered: true,
-  ),
-];
-
-final _sampleDecks = [
-  const MarketplaceDeck(
-    id: 'd1',
-    title: 'SAT Vocabulary — 1000 Essential Words',
-    authorName: 'Priya Sharma',
-    authorAvatar: 'PS',
-    cardCount: 1000,
-    downloads: 8432,
-    rating: 4.8,
-    subject: 'English',
-    examTag: 'SAT',
-  ),
-  const MarketplaceDeck(
-    id: 'd2',
-    title: 'GRE Math Formulas & Concepts',
-    authorName: 'Aditya Kumar',
-    authorAvatar: 'AK',
-    cardCount: 250,
-    downloads: 5201,
-    rating: 4.7,
-    subject: 'Mathematics',
-    examTag: 'GRE',
-  ),
-  const MarketplaceDeck(
-    id: 'd3',
-    title: 'IELTS Academic Word List',
-    authorName: 'Sofia Reyes',
-    authorAvatar: 'SR',
-    cardCount: 570,
-    downloads: 3890,
-    rating: 4.6,
-    subject: 'English',
-    examTag: 'IELTS',
-    isPremium: true,
-    priceUsd: 2.99,
-  ),
-  const MarketplaceDeck(
-    id: 'd4',
-    title: 'WAEC Chemistry — Organic Reactions',
-    authorName: 'Kwame Mensah',
-    authorAvatar: 'KM',
-    cardCount: 180,
-    downloads: 2140,
-    rating: 4.5,
-    subject: 'Chemistry',
-    examTag: 'WAEC',
-  ),
-];
-
-final _sampleFriends = [
-  const Friend(
-    userId: 'u1',
-    name: 'Amara Osei',
-    avatarUrl: 'AO',
-    status: FriendStatus.accepted,
-    xp: 4200,
-    streak: 15,
-  ),
-  const Friend(
-    userId: 'u2',
-    name: 'Priya Sharma',
-    avatarUrl: 'PS',
-    status: FriendStatus.accepted,
-    xp: 7800,
-    streak: 42,
-  ),
-  const Friend(
-    userId: 'u10',
-    name: 'James Okonkwo',
-    avatarUrl: 'JO',
-    status: FriendStatus.pending,
-    xp: 1200,
-    streak: 3,
-  ),
-];
-
 // ── Feed Notifier ─────────────────────────────────────────────────────────
 
 class FeedNotifier extends Notifier<List<SocialPost>> {
   @override
   List<SocialPost> build() {
-    // Restore liked state from Hive
-    final likedIds = Set<String>.from(
-      socialBox.get(kKeyLikedPostIds, defaultValue: <String>[]) as List,
-    );
-    return _samplePosts
-        .map((p) => p.copyWith(isLiked: likedIds.contains(p.id)))
-        .toList();
+    return [];
   }
 
   void toggleLike(String postId) {
@@ -381,17 +108,7 @@ final feedProvider = NotifierProvider<FeedNotifier, List<SocialPost>>(
 class GroupsNotifier extends Notifier<List<StudyGroup>> {
   @override
   List<StudyGroup> build() {
-    // Restore joined state from Hive
-    final joinedIds = Set<String>.from(
-      socialBox.get(kKeyJoinedGroupIds, defaultValue: <String>[]) as List,
-    );
-    return _sampleGroups.map((g) {
-      final joined = joinedIds.contains(g.id);
-      return g.copyWith(
-        isJoined: joined,
-        role: joined ? GroupRole.member : null,
-      );
-    }).toList();
+    return [];
   }
 
   int get joinedCount => state.where((g) => g.isJoined).length;
@@ -431,7 +148,7 @@ final groupsProvider = NotifierProvider<GroupsNotifier, List<StudyGroup>>(
 
 class ForumNotifier extends Notifier<List<ForumQuestion>> {
   @override
-  List<ForumQuestion> build() => _sampleQuestions;
+  List<ForumQuestion> build() => [];
 
   void toggleUpvote(String questionId) {
     state = state.map((q) {
@@ -456,7 +173,7 @@ final forumProvider = NotifierProvider<ForumNotifier, List<ForumQuestion>>(
 
 class MarketplaceNotifier extends Notifier<List<MarketplaceDeck>> {
   @override
-  List<MarketplaceDeck> build() => _sampleDecks;
+  List<MarketplaceDeck> build() => [];
 
   void reportDeck(String deckId) {
     Analytics.reportContent('deck', deckId, 'inappropriate');
@@ -472,7 +189,7 @@ final marketplaceProvider =
 
 class FriendsNotifier extends Notifier<List<Friend>> {
   @override
-  List<Friend> build() => _sampleFriends;
+  List<Friend> build() => [];
 
   List<Friend> get accepted =>
       state.where((f) => f.status == FriendStatus.accepted).toList();

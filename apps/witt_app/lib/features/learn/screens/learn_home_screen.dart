@@ -5,7 +5,6 @@ import 'package:witt_ui/witt_ui.dart';
 import '../data/exam_catalog.dart';
 import '../models/exam.dart';
 import '../providers/exam_providers.dart';
-import 'exam_hub_screen.dart';
 import 'exam_browser_screen.dart';
 import '../../flashcards/screens/deck_list_screen.dart';
 import '../../notes/screens/notes_screen.dart';
