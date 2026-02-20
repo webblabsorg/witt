@@ -246,10 +246,13 @@ class _WeekStrip extends StatelessWidget {
           final day = days[index];
           final isSelected = day == selectedDay;
           final isToday = day == today;
-          final events = ref
-              .watch(plannerEventsProvider.notifier)
-              .eventsForDay(day);
-          final hasEvents = events.isNotEmpty;
+          final allEvents = ref.watch(plannerEventsProvider);
+          final hasEvents = allEvents.any(
+            (e) =>
+                e.date.year == day.year &&
+                e.date.month == day.month &&
+                e.date.day == day.day,
+          );
 
           return GestureDetector(
             onTap: () => ref.read(selectedDayProvider.notifier).state = day,
@@ -664,6 +667,12 @@ class _AddEventSheetState extends ConsumerState<_AddEventSheet> {
   PlannerEventType _type = PlannerEventType.studySession;
   TimeOfDay _startTime = TimeOfDay.now();
   int _durationMinutes = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {

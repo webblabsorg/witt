@@ -19,6 +19,8 @@ import '../features/home/screens/search_screen.dart';
 import '../features/home/screens/notifications_screen.dart';
 import '../features/home/screens/play_hub_screen.dart';
 import '../features/learn/screens/learn_home_screen.dart';
+import '../features/planner/screens/planner_screen.dart';
+import '../features/offline/screens/offline_screen.dart';
 import '../screens/sage/sage_screen.dart';
 import '../screens/social/social_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -136,6 +138,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/learn',
                 builder: (_, __) => const LearnHomeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'planner',
+                    builder: (_, __) => const PlannerScreen(),
+                  ),
+                  GoRoute(
+                    path: 'offline',
+                    builder: (_, __) => const OfflineScreen(),
+                  ),
+                ],
               ),
             ],
           ),

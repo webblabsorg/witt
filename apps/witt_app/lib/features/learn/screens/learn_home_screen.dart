@@ -12,6 +12,8 @@ import '../../vocabulary/screens/vocabulary_screen.dart';
 import '../../mock_test/screens/mock_test_config_screen.dart';
 import '../../quiz/screens/quiz_generator_screen.dart';
 import '../../homework/screens/homework_screen.dart';
+import '../../planner/screens/planner_screen.dart';
+import '../../offline/screens/offline_screen.dart';
 
 class LearnHomeScreen extends ConsumerWidget {
   const LearnHomeScreen({super.key});
@@ -164,7 +166,7 @@ class LearnHomeScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: WittSpacing.lg),
               child: GridView.count(
-                crossAxisCount: 3,
+                crossAxisCount: 4,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: WittSpacing.sm,
@@ -228,6 +230,22 @@ class LearnHomeScreen extends ConsumerWidget {
                     color: WittColors.warning,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const HomeworkScreen()),
+                    ),
+                  ),
+                  _ToolCard(
+                    emoji: '📅',
+                    label: 'Planner',
+                    color: WittColors.accent,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PlannerScreen()),
+                    ),
+                  ),
+                  _ToolCard(
+                    emoji: '📥',
+                    label: 'Offline',
+                    color: WittColors.textSecondary,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const OfflineScreen()),
                     ),
                   ),
                 ],

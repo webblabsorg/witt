@@ -17,7 +17,8 @@ class QuizHistoryNotifier extends Notifier<List<QuizResult>> {
 
 final quizHistoryProvider =
     NotifierProvider<QuizHistoryNotifier, List<QuizResult>>(
-        QuizHistoryNotifier.new);
+      QuizHistoryNotifier.new,
+    );
 
 // ── Quiz session ──────────────────────────────────────────────────────────
 
@@ -33,13 +34,69 @@ class QuizSessionNotifier extends Notifier<QuizSessionState?> {
     // Generate questions from exam catalog via TestPrepEngine
     final examId = config.sourceId ?? 'sat';
     final engine = ref.read(testPrepEngineProvider(examId));
-    final questions = engine.getPreGeneratedQuestions(
+    // Fetch more than needed so we can filter
+    var questions = engine.getPreGeneratedQuestions(
       sectionId: 'all',
       topic: config.title,
-      count: config.questionCount,
+      count: config.questionCount * 3,
       alreadyAttempted: 0,
       isPaidUser: ref.read(isPaidUserProvider),
     );
+
+    // Filter by question type based on config toggles
+    final allowedTypes = <QuestionType>{};
+    if (config.includeMultipleChoice) {
+      allowedTypes.addAll([QuestionType.mcq, QuestionType.multiSelect]);
+    }
+    if (config.includeTrueFalse) allowedTypes.add(QuestionType.trueFalse);
+    if (config.includeFillBlank) allowedTypes.add(QuestionType.fillBlank);
+    // If nothing toggled on, allow all (fallback)
+    if (allowedTypes.isNotEmpty) {
+      questions = questions
+          .where((q) => allowedTypes.contains(q.type))
+          .toList();
+    }
+
+    // Filter by difficulty
+    if (config.difficulty != QuizDifficulty.mixed) {
+      final targetLevels = switch (config.difficulty) {
+        QuizDifficulty.easy => {DifficultyLevel.easy, DifficultyLevel.medium},
+        QuizDifficulty.hard => {DifficultyLevel.hard, DifficultyLevel.expert},
+        QuizDifficulty.mixed => DifficultyLevel.values.toSet(),
+      };
+      questions = questions
+          .where((q) => targetLevels.contains(q.difficulty))
+          .toList();
+    }
+
+    // Shuffle if requested, then take the desired count
+    if (config.shuffleQuestions) questions.shuffle();
+    questions = questions.take(config.questionCount).toList();
+
+    // Shuffle options within each question if requested
+    if (config.shuffleOptions) {
+      questions = questions.map((q) {
+        final shuffled = List.of(q.options)..shuffle();
+        return Question(
+          id: q.id,
+          examId: q.examId,
+          sectionId: q.sectionId,
+          type: q.type,
+          text: q.text,
+          options: shuffled,
+          correctAnswerIds: q.correctAnswerIds,
+          difficulty: q.difficulty,
+          topic: q.topic,
+          estimatedTimeSeconds: q.estimatedTimeSeconds,
+          explanation: q.explanation,
+          passageText: q.passageText,
+          imageUrl: q.imageUrl,
+          audioUrl: q.audioUrl,
+          isPreGenerated: q.isPreGenerated,
+          tags: q.tags,
+        );
+      }).toList();
+    }
 
     final timeLimitSecs = config.timeLimitMinutes != null
         ? config.timeLimitMinutes! * 60
@@ -135,18 +192,19 @@ class QuizSessionNotifier extends Notifier<QuizSessionState?> {
 
 final quizSessionProvider =
     NotifierProvider<QuizSessionNotifier, QuizSessionState?>(
-        QuizSessionNotifier.new);
+      QuizSessionNotifier.new,
+    );
 
 // ── Quiz config builder ───────────────────────────────────────────────────
 
 class QuizConfigNotifier extends Notifier<QuizConfig> {
   @override
   QuizConfig build() => const QuizConfig(
-        title: 'Quick Quiz',
-        source: QuizSource.manual,
-        questionCount: 10,
-        difficulty: QuizDifficulty.mixed,
-      );
+    title: 'Quick Quiz',
+    source: QuizSource.manual,
+    questionCount: 10,
+    difficulty: QuizDifficulty.mixed,
+  );
 
   void setTitle(String title) => state = state.copyWith(title: title);
   void setSource(QuizSource source, {String? sourceId}) =>
@@ -159,14 +217,12 @@ class QuizConfigNotifier extends Notifier<QuizConfig> {
       state = state.copyWith(timeLimitMinutes: minutes);
   void toggleMultipleChoice(bool v) =>
       state = state.copyWith(includeMultipleChoice: v);
-  void toggleTrueFalse(bool v) =>
-      state = state.copyWith(includeTrueFalse: v);
-  void toggleFillBlank(bool v) =>
-      state = state.copyWith(includeFillBlank: v);
-  void toggleShuffle(bool v) =>
-      state = state.copyWith(shuffleQuestions: v);
+  void toggleTrueFalse(bool v) => state = state.copyWith(includeTrueFalse: v);
+  void toggleFillBlank(bool v) => state = state.copyWith(includeFillBlank: v);
+  void toggleShuffle(bool v) => state = state.copyWith(shuffleQuestions: v);
   void reset() => ref.invalidateSelf();
 }
 
-final quizConfigProvider =
-    NotifierProvider<QuizConfigNotifier, QuizConfig>(QuizConfigNotifier.new);
+final quizConfigProvider = NotifierProvider<QuizConfigNotifier, QuizConfig>(
+  QuizConfigNotifier.new,
+);
