@@ -91,7 +91,7 @@ AI Feature Request
 1. **M2 flashcard AI gen provider:** Groq (free) / OpenAI (paid) — NOT Claude. Claude is exam questions only.
 2. **M8 quiz gen:** Claude only when `source == QuizSource.fromExam` AND `examId` is set. All other sources → Groq/OpenAI.
 3. **Catalog Milestone C:** 100+ exams — deferred to Session 3.4 (purchase flows). Pre-gen question pool expansion happens in 3.3.
-4. **Subrail SDK:** Implemented as a local stub (no external SDK dependency) since `/Documents/Projects/subrail` is internal. Entitlement checks via `isPaidUserProvider` and `isExamUnlockedProvider`.
+4. **Subrail SDK:** Billing SDK at `/Documents/Projects/subrail` (not yet populated). Currently implemented as a simulated stub in `PurchaseFlowNotifier`. Entitlement checks via `isPaidUserProvider` and `isExamUnlockedProvider`. Integration blocked until Subrail SDK is populated.
 
 ---
 
@@ -112,6 +112,11 @@ All 5 in-memory providers are overridden at `ProviderScope` level in `main.dart`
 ### Purchase Flow ⚠️ Open — Pre-launch blocker
 `PurchaseFlowNotifier.purchase()` (`packages/witt_monetization/lib/src/providers/entitlement_provider.dart`) is a **simulated flow** (2-second delay + grant trial entitlement locally). No real billing SDK is called.
 
-**Required before App Store submission:** Integrate Subrail or RevenueCat SDK. The `purchase()`, `restore()`, and `purchaseExam()` method signatures are already in place — only the SDK call bodies need replacing.
+**Billing SDK:** Subrail (`/Documents/Projects/subrail`). The directory exists but is not yet populated with SDK code.
+
+**Required before App Store submission:**
+1. Populate `/Documents/Projects/subrail` with the Subrail SDK.
+2. Add it as a path dependency in `packages/witt_monetization/pubspec.yaml`.
+3. Replace the simulated bodies of `purchase()`, `restore()`, and `purchaseExam()` in `PurchaseFlowNotifier` with real Subrail SDK calls — method signatures are already in place.
 
 **Cross-device entitlement sync** also requires a Supabase `user_entitlements` table and hydration on auth state change.
