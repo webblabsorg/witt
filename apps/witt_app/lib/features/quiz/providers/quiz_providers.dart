@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:witt_ai/witt_ai.dart';
 import '../../learn/models/question.dart';
 import '../../learn/providers/test_prep_providers.dart';
+import '../../progress/providers/progress_providers.dart';
 import '../models/quiz.dart';
 
 // ── Quiz history ──────────────────────────────────────────────────────────
@@ -321,6 +322,22 @@ class QuizSessionNotifier extends Notifier<QuizSessionState?> {
       completedAt: DateTime.now(),
     );
     ref.read(quizHistoryProvider.notifier).addResult(result);
+
+    // ── Progress instrumentation ──────────────────────────────────────────
+    final activity = ref.read(dailyActivityProvider.notifier);
+    final xp = ref.read(xpProvider.notifier);
+    final badges = ref.read(badgeProvider.notifier);
+    for (final q in s.questions) {
+      final userAnswer = s.answers[q.id];
+      final isCorrect =
+          userAnswer != null &&
+          q.correctAnswerIds.any((id) => userAnswer.contains(id));
+      activity.recordQuestion(isCorrect: isCorrect);
+    }
+    final timeMinutes = DateTime.now().difference(s.startedAt).inMinutes;
+    if (timeMinutes > 0) activity.recordMinutes(timeMinutes);
+    xp.addXp(result.correctCount * 10);
+    badges.checkAndAward(ref);
   }
 
   void resetQuiz() {

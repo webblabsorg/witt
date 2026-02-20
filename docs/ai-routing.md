@@ -92,3 +92,20 @@ AI Feature Request
 2. **M8 quiz gen:** Claude only when `source == QuizSource.fromExam` AND `examId` is set. All other sources → Groq/OpenAI.
 3. **Catalog Milestone C:** 100+ exams — deferred to Session 3.4 (purchase flows). Pre-gen question pool expansion happens in 3.3.
 4. **Subrail SDK:** Implemented as a local stub (no external SDK dependency) since `/Documents/Projects/subrail` is internal. Entitlement checks via `isPaidUserProvider` and `isExamUnlockedProvider`.
+
+---
+
+## Known Limitations & Future Work
+
+### Usage Limit Persistence (Medium Priority)
+`UsageNotifier` (in `witt_ai/src/providers/ai_providers.dart`) tracks daily/monthly usage counts **in-memory only**. Limits reset on app restart and are not enforced cross-device.
+
+**Current behaviour:** Free-tier limits (e.g. 10 Sage messages/day) are enforced within a single app session only.
+
+**Production fix required:** Persist usage records to Supabase `user_usage` table and hydrate on app start. The `UsageRecord` model and `recordUsage()` / `canUse()` / `limitMessage()` API are already designed to support this — only the persistence layer is missing.
+
+### Purchase Flow (Medium Priority)
+`PurchaseFlowNotifier.purchase()` is a local simulation (delay + grant trial). Real Subrail/RevenueCat SDK integration is required before App Store submission.
+
+### Progress XP & Badges (Low Priority)
+XP and badge state is in-memory (Riverpod `NotifierProvider`). Persisting to Supabase or Hive is needed for cross-session continuity.

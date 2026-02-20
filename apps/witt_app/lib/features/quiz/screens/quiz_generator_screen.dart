@@ -121,12 +121,29 @@ class QuizGeneratorScreen extends ConsumerWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _startCustomQuiz(context, ref, config),
-        icon: const Icon(Icons.play_arrow),
-        label: const Text('Start Quiz'),
-        backgroundColor: WittColors.primary,
-        foregroundColor: Colors.white,
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (config.source == QuizSource.aiGenerated)
+            FloatingActionButton.extended(
+              heroTag: 'ai_quiz',
+              onPressed: () => _startCustomQuiz(context, ref, config),
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Generate with AI'),
+              backgroundColor: WittColors.secondary,
+              foregroundColor: Colors.white,
+            )
+          else
+            FloatingActionButton.extended(
+              heroTag: 'start_quiz',
+              onPressed: () => _startCustomQuiz(context, ref, config),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start Quiz'),
+              backgroundColor: WittColors.primary,
+              foregroundColor: Colors.white,
+            ),
+        ],
       ),
     );
   }
@@ -145,15 +162,21 @@ class QuizGeneratorScreen extends ConsumerWidget {
     ).push(MaterialPageRoute(builder: (_) => const QuizSessionScreen()));
   }
 
-  void _startCustomQuiz(
+  Future<void> _startCustomQuiz(
     BuildContext context,
     WidgetRef ref,
     QuizConfig config,
-  ) {
-    ref.read(quizSessionProvider.notifier).startQuiz(config);
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const QuizSessionScreen()));
+  ) async {
+    if (config.source == QuizSource.aiGenerated) {
+      await ref.read(quizSessionProvider.notifier).startQuizAi(config);
+    } else {
+      ref.read(quizSessionProvider.notifier).startQuiz(config);
+    }
+    if (context.mounted) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const QuizSessionScreen()));
+    }
   }
 }
 

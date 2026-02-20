@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:witt_ai/witt_ai.dart';
 import '../models/homework.dart';
 import '../../learn/providers/test_prep_providers.dart';
+import '../../progress/providers/progress_providers.dart';
 
 // ── Homework history ──────────────────────────────────────────────────────
 
@@ -95,6 +96,9 @@ class HomeworkSessionNotifier extends Notifier<HomeworkSessionState> {
       final solution = _parseSolution(response.content);
       state = state.copyWith(isLoading: false, solution: solution);
       ref.read(homeworkHistoryProvider.notifier).addSolution(solution);
+      ref.read(xpProvider.notifier).addXp(20);
+      ref.read(dailyActivityProvider.notifier).recordMinutes(5);
+      ref.read(badgeProvider.notifier).checkAndAward(ref);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }

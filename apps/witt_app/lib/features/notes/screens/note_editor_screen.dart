@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:witt_ui/witt_ui.dart';
 import '../models/note.dart';
 import '../providers/notes_providers.dart';
+import '../providers/ai_notes_provider.dart';
+import '../../flashcards/providers/ai_flashcard_provider.dart';
+import '../../flashcards/screens/deck_detail_screen.dart';
 
 class NoteEditorScreen extends ConsumerStatefulWidget {
   const NoteEditorScreen({super.key, required this.noteId});
@@ -154,8 +157,24 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               const PopupMenuItem(value: 'pin', child: Text('Pin / Unpin')),
               const PopupMenuItem(value: 'favorite', child: Text('Favorite')),
               const PopupMenuItem(
+                value: 'summarize',
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 16),
+                    SizedBox(width: 8),
+                    Text('AI Summary'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
                 value: 'flashcards',
-                child: Text('Generate Flashcards'),
+                child: Row(
+                  children: [
+                    Icon(Icons.style_outlined, size: 16),
+                    SizedBox(width: 8),
+                    Text('Generate Flashcards'),
+                  ],
+                ),
               ),
               PopupMenuItem(
                 value: 'delete',
@@ -348,15 +367,254 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         ref.read(noteListProvider.notifier).togglePin(note.id);
       case 'favorite':
         ref.read(noteListProvider.notifier).toggleFavorite(note.id);
+      case 'summarize':
+        _showSummarySheet(context, ref, note.id);
       case 'flashcards':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Flashcard generation — coming in Phase 3'),
-          ),
-        );
+        _generateFlashcardsFromNote(context, ref, note);
       case 'delete':
         _deleteNote(context, ref, note.id);
     }
+  }
+
+  void _showSummarySheet(BuildContext context, WidgetRef ref, String noteId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _AiSummarySheet(noteId: noteId),
+    );
+  }
+
+  Future<void> _generateFlashcardsFromNote(
+    BuildContext context,
+    WidgetRef ref,
+    Note note,
+  ) async {
+    final topic = note.subject ?? note.title;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Generating flashcards for "$topic"…')),
+    );
+    await ref
+        .read(aiFlashcardGenProvider.notifier)
+        .generateDeck(topic: topic, examId: note.examId);
+    final state = ref.read(aiFlashcardGenProvider);
+    if (state.status == AiFlashcardGenStatus.done &&
+        state.generatedDeckId != null &&
+        context.mounted) {
+      ref.read(aiFlashcardGenProvider.notifier).reset();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DeckDetailScreen(deckId: state.generatedDeckId!),
+        ),
+      );
+    } else if (state.status == AiFlashcardGenStatus.error && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.errorMessage ?? 'Generation failed'),
+          backgroundColor: WittColors.error,
+        ),
+      );
+    }
+  }
+}
+
+// ── AI Summary Sheet ──────────────────────────────────────────────────────────
+
+class _AiSummarySheet extends ConsumerStatefulWidget {
+  const _AiSummarySheet({required this.noteId});
+  final String noteId;
+
+  @override
+  ConsumerState<_AiSummarySheet> createState() => _AiSummarySheetState();
+}
+
+class _AiSummarySheetState extends ConsumerState<_AiSummarySheet> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(aiNoteSummaryProvider(widget.noteId).notifier).summarize();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final state = ref.watch(aiNoteSummaryProvider(widget.noteId));
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.6,
+      maxChildSize: 0.92,
+      builder: (_, controller) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: WittColors.outline,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                WittSpacing.lg,
+                WittSpacing.md,
+                WittSpacing.lg,
+                0,
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: WittColors.secondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: WittSpacing.sm),
+                  Text(
+                    'AI Summary',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (state.status == AiNoteSummaryStatus.done)
+                    IconButton(
+                      icon: const Icon(Icons.refresh, size: 20),
+                      onPressed: () => ref
+                          .read(aiNoteSummaryProvider(widget.noteId).notifier)
+                          .summarize(),
+                      tooltip: 'Regenerate',
+                    ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: switch (state.status) {
+                AiNoteSummaryStatus.loading => const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: WittSpacing.md),
+                      Text('Summarizing with AI…'),
+                    ],
+                  ),
+                ),
+                AiNoteSummaryStatus.error ||
+                AiNoteSummaryStatus.limited => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(WittSpacing.lg),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: WittColors.error,
+                          size: 40,
+                        ),
+                        const SizedBox(height: WittSpacing.md),
+                        Text(
+                          state.errorMessage ?? 'Could not generate summary',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: WittColors.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                AiNoteSummaryStatus.done when state.summary != null => ListView(
+                  controller: controller,
+                  padding: const EdgeInsets.all(WittSpacing.lg),
+                  children: [
+                    Text(
+                      'Summary',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: WittSpacing.sm),
+                    Text(
+                      state.summary!.summary,
+                      style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
+                    ),
+                    if (state.summary!.keyPoints.isNotEmpty) ...[
+                      const SizedBox(height: WittSpacing.md),
+                      Text(
+                        'Key Points',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: WittSpacing.xs),
+                      ...state.summary!.keyPoints.map(
+                        (p) => Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: WittSpacing.xs,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• '),
+                              Expanded(
+                                child: Text(
+                                  p,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (state.summary!.definitions.isNotEmpty) ...[
+                      const SizedBox(height: WittSpacing.md),
+                      Text(
+                        'Definitions',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: WittSpacing.xs),
+                      ...state.summary!.definitions.map(
+                        (d) => Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: WittSpacing.sm,
+                          ),
+                          child: RichText(
+                            text: TextSpan(
+                              style: theme.textTheme.bodyMedium,
+                              children: [
+                                TextSpan(
+                                  text: '${d['term']}: ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                TextSpan(text: d['definition']),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                _ => const SizedBox.shrink(),
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

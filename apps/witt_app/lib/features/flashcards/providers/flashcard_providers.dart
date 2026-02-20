@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/flashcard.dart';
 import '../services/sm2_algorithm.dart';
+import '../../progress/providers/progress_providers.dart';
 
 // ── Deck CRUD ─────────────────────────────────────────────────────────────
 
@@ -31,14 +32,14 @@ class DeckListNotifier extends Notifier<List<FlashcardDeck>> {
 
 final deckListProvider =
     NotifierProvider<DeckListNotifier, List<FlashcardDeck>>(
-        DeckListNotifier.new);
+      DeckListNotifier.new,
+    );
 
-final deckByIdProvider =
-    Provider.family<FlashcardDeck?, String>((ref, id) {
-  return ref.watch(deckListProvider).cast<FlashcardDeck?>().firstWhere(
-        (d) => d?.id == id,
-        orElse: () => null,
-      );
+final deckByIdProvider = Provider.family<FlashcardDeck?, String>((ref, id) {
+  return ref
+      .watch(deckListProvider)
+      .cast<FlashcardDeck?>()
+      .firstWhere((d) => d?.id == id, orElse: () => null);
 });
 
 // ── Card CRUD ─────────────────────────────────────────────────────────────
@@ -47,8 +48,7 @@ class CardListNotifier extends Notifier<Map<String, List<Flashcard>>> {
   @override
   Map<String, List<Flashcard>> build() => _sampleCards;
 
-  List<Flashcard> cardsForDeck(String deckId) =>
-      state[deckId] ?? const [];
+  List<Flashcard> cardsForDeck(String deckId) => state[deckId] ?? const [];
 
   void addCard(Flashcard card) {
     final current = List<Flashcard>.from(state[card.deckId] ?? []);
@@ -139,15 +139,20 @@ class CardListNotifier extends Notifier<Map<String, List<Flashcard>>> {
 
 final cardListProvider =
     NotifierProvider<CardListNotifier, Map<String, List<Flashcard>>>(
-        CardListNotifier.new);
+      CardListNotifier.new,
+    );
 
-final cardsForDeckProvider =
-    Provider.family<List<Flashcard>, String>((ref, deckId) {
+final cardsForDeckProvider = Provider.family<List<Flashcard>, String>((
+  ref,
+  deckId,
+) {
   return ref.watch(cardListProvider)[deckId] ?? const [];
 });
 
-final dueCardsForDeckProvider =
-    Provider.family<List<Flashcard>, String>((ref, deckId) {
+final dueCardsForDeckProvider = Provider.family<List<Flashcard>, String>((
+  ref,
+  deckId,
+) {
   return (ref.watch(cardListProvider)[deckId] ?? [])
       .where((c) => c.isDue)
       .toList();
@@ -192,8 +197,7 @@ class StudySessionState {
   bool get isLast => currentIndex + 1 >= queue.length;
   int get correctCount =>
       ratings.where((r) => r == Sm2Rating.good || r == Sm2Rating.easy).length;
-  int get totalTimeSeconds =>
-      DateTime.now().difference(startedAt).inSeconds;
+  int get totalTimeSeconds => DateTime.now().difference(startedAt).inSeconds;
 
   StudySessionState copyWith({
     String? deckId,
@@ -208,21 +212,20 @@ class StudySessionState {
     List<MatchPair>? matchPairs,
     String? matchSelected,
     List<String>? matchCompleted,
-  }) =>
-      StudySessionState(
-        deckId: deckId ?? this.deckId,
-        mode: mode ?? this.mode,
-        status: status ?? this.status,
-        queue: queue ?? this.queue,
-        currentIndex: currentIndex ?? this.currentIndex,
-        isFlipped: isFlipped ?? this.isFlipped,
-        ratings: ratings ?? this.ratings,
-        startedAt: startedAt ?? this.startedAt,
-        typedAnswer: typedAnswer ?? this.typedAnswer,
-        matchPairs: matchPairs ?? this.matchPairs,
-        matchSelected: matchSelected ?? this.matchSelected,
-        matchCompleted: matchCompleted ?? this.matchCompleted,
-      );
+  }) => StudySessionState(
+    deckId: deckId ?? this.deckId,
+    mode: mode ?? this.mode,
+    status: status ?? this.status,
+    queue: queue ?? this.queue,
+    currentIndex: currentIndex ?? this.currentIndex,
+    isFlipped: isFlipped ?? this.isFlipped,
+    ratings: ratings ?? this.ratings,
+    startedAt: startedAt ?? this.startedAt,
+    typedAnswer: typedAnswer ?? this.typedAnswer,
+    matchPairs: matchPairs ?? this.matchPairs,
+    matchSelected: matchSelected ?? this.matchSelected,
+    matchCompleted: matchCompleted ?? this.matchCompleted,
+  );
 }
 
 class MatchPair {
@@ -268,12 +271,14 @@ class StudySessionNotifier extends Notifier<StudySessionState?> {
     if (mode == StudyMode.match) {
       matchPairs = queue
           .take(6)
-          .map((c) => MatchPair(
-                id: c.id,
-                front: c.front,
-                back: c.back,
-                isMatched: false,
-              ))
+          .map(
+            (c) => MatchPair(
+              id: c.id,
+              front: c.front,
+              back: c.back,
+              isMatched: false,
+            ),
+          )
           .toList();
     }
 
@@ -301,11 +306,19 @@ class StudySessionNotifier extends Notifier<StudySessionState?> {
     if (s == null || s.currentCard == null) return;
 
     // Apply SM-2 review
-    ref.read(cardListProvider.notifier).applyReview(
+    ref
+        .read(cardListProvider.notifier)
+        .applyReview(
           deckId: s.deckId,
           cardId: s.currentCard!.id,
           rating: rating,
         );
+
+    // Progress instrumentation
+    ref.read(dailyActivityProvider.notifier).recordFlashcard();
+    if (rating == Sm2Rating.good || rating == Sm2Rating.easy) {
+      ref.read(xpProvider.notifier).addXp(5);
+    }
 
     final newRatings = [...s.ratings, rating];
 
@@ -314,6 +327,7 @@ class StudySessionNotifier extends Notifier<StudySessionState?> {
         ratings: newRatings,
         status: StudySessionStatus.complete,
       );
+      ref.read(badgeProvider.notifier).checkAndAward(ref);
     } else {
       state = s.copyWith(
         currentIndex: s.currentIndex + 1,
@@ -333,7 +347,8 @@ class StudySessionNotifier extends Notifier<StudySessionState?> {
   void submitTypedAnswer() {
     final s = state;
     if (s == null || s.currentCard == null) return;
-    final correct = s.typedAnswer.trim().toLowerCase() ==
+    final correct =
+        s.typedAnswer.trim().toLowerCase() ==
         s.currentCard!.back.trim().toLowerCase();
     rate(correct ? Sm2Rating.good : Sm2Rating.again);
   }
@@ -350,11 +365,13 @@ class StudySessionNotifier extends Notifier<StudySessionState?> {
     // Check if it's a matching pair
     final first = s.matchPairs.firstWhere(
       (p) => p.id == s.matchSelected || '${p.id}_back' == s.matchSelected,
-      orElse: () => const MatchPair(id: '', front: '', back: '', isMatched: false),
+      orElse: () =>
+          const MatchPair(id: '', front: '', back: '', isMatched: false),
     );
     final second = s.matchPairs.firstWhere(
       (p) => p.id == id || '${p.id}_back' == id,
-      orElse: () => const MatchPair(id: '', front: '', back: '', isMatched: false),
+      orElse: () =>
+          const MatchPair(id: '', front: '', back: '', isMatched: false),
     );
 
     if (first.id.isNotEmpty && second.id.isNotEmpty && first.id == second.id) {
@@ -377,7 +394,8 @@ class StudySessionNotifier extends Notifier<StudySessionState?> {
 
 final studySessionProvider =
     NotifierProvider<StudySessionNotifier, StudySessionState?>(
-        StudySessionNotifier.new);
+      StudySessionNotifier.new,
+    );
 
 // ── Sample data ───────────────────────────────────────────────────────────
 
@@ -501,7 +519,8 @@ final Map<String, List<Flashcard>> _sampleCards = {
       deckId: 'deck_waec_bio',
       type: FlashcardType.basic,
       front: 'What is osmosis?',
-      back: 'The movement of water molecules through a semi-permeable membrane from a region of lower solute concentration to higher solute concentration.',
+      back:
+          'The movement of water molecules through a semi-permeable membrane from a region of lower solute concentration to higher solute concentration.',
       tags: const ['WAEC', 'Biology', 'Cell Biology'],
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
     ),
@@ -510,7 +529,8 @@ final Map<String, List<Flashcard>> _sampleCards = {
       deckId: 'deck_waec_bio',
       type: FlashcardType.basic,
       front: 'Define photosynthesis',
-      back: 'The process by which green plants use sunlight, water, and CO₂ to produce glucose and oxygen. Equation: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂',
+      back:
+          'The process by which green plants use sunlight, water, and CO₂ to produce glucose and oxygen. Equation: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂',
       tags: const ['WAEC', 'Biology', 'Plant Biology'],
       easeFactor: 2.4,
       interval: 2,
@@ -523,7 +543,8 @@ final Map<String, List<Flashcard>> _sampleCards = {
       deckId: 'deck_waec_bio',
       type: FlashcardType.basic,
       front: 'What is the function of mitochondria?',
-      back: 'The powerhouse of the cell — produces ATP through cellular respiration.',
+      back:
+          'The powerhouse of the cell — produces ATP through cellular respiration.',
       tags: const ['WAEC', 'Biology', 'Cell Biology'],
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
     ),
@@ -532,7 +553,8 @@ final Map<String, List<Flashcard>> _sampleCards = {
       deckId: 'deck_waec_bio',
       type: FlashcardType.basic,
       front: 'Difference between mitosis and meiosis',
-      back: 'Mitosis: produces 2 identical diploid cells (growth/repair). Meiosis: produces 4 haploid cells (sexual reproduction).',
+      back:
+          'Mitosis: produces 2 identical diploid cells (growth/repair). Meiosis: produces 4 haploid cells (sexual reproduction).',
       tags: const ['WAEC', 'Biology', 'Genetics'],
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),

@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:witt_ai/witt_ai.dart';
 import 'package:witt_ui/witt_ui.dart';
 import '../models/exam.dart';
 import '../models/question.dart';
 import '../providers/exam_providers.dart';
+import '../providers/test_prep_providers.dart';
 import 'question_screen.dart';
 import 'topic_drill_screen.dart';
 
@@ -189,6 +192,15 @@ class ExamHubScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: WittSpacing.sm),
+                  _ActionCard(
+                    icon: Icons.auto_awesome,
+                    label: 'AI Generate Questions',
+                    subtitle: 'Claude creates custom practice Qs',
+                    color: WittColors.secondary,
+                    onTap: () => _generateAiQuestions(context, ref, exam),
+                    fullWidth: true,
+                  ),
                 ],
               ),
             ),
@@ -241,6 +253,137 @@ class ExamHubScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _generateAiQuestions(
+    BuildContext context,
+    WidgetRef ref,
+    Exam exam,
+  ) async {
+    final isPaid = ref.read(isPaidUserProvider);
+    final usage = ref.read(usageProvider.notifier);
+
+    if (!usage.canUse(AiFeature.examGenerate, isPaid)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(usage.limitMessage(AiFeature.examGenerate)),
+            backgroundColor: WittColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Generating ${exam.name} questions with Claude…'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+
+    final sectionNames = exam.sections.map((s) => s.name).take(3).join(', ');
+    final request = AiRequest(
+      feature: AiFeature.examGenerate,
+      messages: [
+        AiMessage(
+          id: 'exam_gen',
+          role: 'user',
+          content:
+              'Generate 10 practice questions for ${exam.name} exam. '
+              'Cover these sections: $sectionNames. '
+              'Mix difficulty levels. Include MCQ and true/false.',
+          createdAt: DateTime.now(),
+        ),
+      ],
+      isPaidUser: isPaid,
+    );
+
+    final router = ref.read(aiRouterProvider);
+    final response = await router.request(request);
+
+    if (!context.mounted) return;
+
+    if (response.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.error ?? 'Generation failed'),
+          backgroundColor: WittColors.error,
+        ),
+      );
+      return;
+    }
+
+    usage.recordUsage(AiFeature.examGenerate);
+    final questions = _parseAiExamQuestions(response.content, exam);
+
+    if (questions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not parse questions. Try again.')),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => QuestionScreen(
+          examId: exam.id,
+          sectionName: 'AI Practice — ${exam.name}',
+          questions: questions,
+        ),
+      ),
+    );
+  }
+
+  List<Question> _parseAiExamQuestions(String jsonContent, Exam exam) {
+    try {
+      final raw = jsonDecode(jsonContent);
+      final list = raw is List ? raw : (raw as Map)['questions'] as List? ?? [];
+      return list.asMap().entries.map((entry) {
+        final i = entry.key;
+        final q = entry.value as Map<String, dynamic>;
+        final optionsRaw = q['options'] as List<dynamic>? ?? [];
+        final options = optionsRaw.map((o) {
+          final om = o as Map<String, dynamic>;
+          return QuestionOption(
+            id: om['id'] as String? ?? 'opt_$i',
+            text: om['text'] as String? ?? '',
+          );
+        }).toList();
+        final correctRaw = q['correct_answer_ids'] as List<dynamic>? ?? [];
+        return Question(
+          id: 'ai_exam_${exam.id}_${DateTime.now().millisecondsSinceEpoch}_$i',
+          examId: exam.id,
+          sectionId: q['section_id'] as String? ?? 'ai',
+          type: _parseQType(q['type'] as String? ?? 'mcq'),
+          text: q['text'] as String? ?? '',
+          options: options,
+          correctAnswerIds: correctRaw.map((e) => e.toString()).toList(),
+          difficulty: _parseDifficulty(q['difficulty'] as String? ?? 'medium'),
+          topic: q['topic'] as String? ?? exam.name,
+          estimatedTimeSeconds: 60,
+          explanation: q['explanation'] as String? ?? '',
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  QuestionType _parseQType(String t) => switch (t) {
+    'trueFalse' => QuestionType.trueFalse,
+    'fillBlank' => QuestionType.fillBlank,
+    'multiSelect' => QuestionType.multiSelect,
+    _ => QuestionType.mcq,
+  };
+
+  DifficultyLevel _parseDifficulty(String d) => switch (d) {
+    'easy' => DifficultyLevel.easy,
+    'hard' => DifficultyLevel.hard,
+    'expert' => DifficultyLevel.expert,
+    _ => DifficultyLevel.medium,
+  };
 
   List<Question> _buildSampleQuestions(
     Exam exam,
@@ -491,6 +634,7 @@ class _ActionCard extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.onTap,
+    this.fullWidth = false,
   });
 
   final IconData icon;
@@ -498,6 +642,7 @@ class _ActionCard extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
+  final bool fullWidth;
 
   @override
   Widget build(BuildContext context) {

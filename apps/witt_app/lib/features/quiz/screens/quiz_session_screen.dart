@@ -53,8 +53,8 @@ class QuizSessionScreen extends ConsumerWidget {
                     Text(
                       'Question ${session.currentIndex + 1} of ${session.questions.length}',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: WittColors.textSecondary,
-                          ),
+                        color: WittColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: WittSpacing.sm),
 
@@ -62,9 +62,9 @@ class QuizSessionScreen extends ConsumerWidget {
                     Text(
                       q.text,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
-                          ),
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: WittSpacing.lg),
 
@@ -75,8 +75,7 @@ class QuizSessionScreen extends ConsumerWidget {
                       final isSelected = selected.contains(option.id);
 
                       return Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: WittSpacing.sm),
+                        padding: const EdgeInsets.only(bottom: WittSpacing.sm),
                         child: GestureDetector(
                           onTap: () {
                             HapticFeedback.selectionClick();
@@ -94,8 +93,9 @@ class QuizSessionScreen extends ConsumerWidget {
                               color: isSelected
                                   ? WittColors.primaryContainer
                                   : WittColors.surfaceVariant,
-                              borderRadius:
-                                  BorderRadius.circular(WittSpacing.sm),
+                              borderRadius: BorderRadius.circular(
+                                WittSpacing.sm,
+                              ),
                               border: Border.all(
                                 color: isSelected
                                     ? WittColors.primary
@@ -168,11 +168,13 @@ class QuizSessionScreen extends ConsumerWidget {
         content: const Text('Your progress will be lost.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Keep going')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep going'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('End quiz')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('End quiz'),
+          ),
         ],
       ),
     );
@@ -211,7 +213,9 @@ class _QuizHeader extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: WittSpacing.md, vertical: WittSpacing.sm),
+            horizontal: WittSpacing.md,
+            vertical: WittSpacing.sm,
+          ),
           child: Row(
             children: [
               IconButton(
@@ -234,7 +238,9 @@ class _QuizHeader extends StatelessWidget {
               if (remaining != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: WittSpacing.sm, vertical: 4),
+                    horizontal: WittSpacing.sm,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isLow
                         ? WittColors.error.withValues(alpha: 0.1)
@@ -248,11 +254,13 @@ class _QuizHeader extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.timer,
-                          size: 14,
-                          color: isLow
-                              ? WittColors.error
-                              : WittColors.textTertiary),
+                      Icon(
+                        Icons.timer,
+                        size: 14,
+                        color: isLow
+                            ? WittColors.error
+                            : WittColors.textTertiary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         _formatTime(remaining),
@@ -272,8 +280,7 @@ class _QuizHeader extends StatelessWidget {
         LinearProgressIndicator(
           value: progress,
           backgroundColor: WittColors.outline,
-          valueColor:
-              const AlwaysStoppedAnimation<Color>(WittColors.primary),
+          valueColor: const AlwaysStoppedAnimation<Color>(WittColors.primary),
           minHeight: 3,
         ),
       ],
@@ -291,8 +298,7 @@ class _QuizBottomBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isFirst = session.currentIndex == 0;
-    final hasAnswer =
-        session.answers.containsKey(session.currentQuestion?.id);
+    final hasAnswer = session.answers.containsKey(session.currentQuestion?.id);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -311,9 +317,8 @@ class _QuizBottomBar extends ConsumerWidget {
             label: 'Prev',
             onPressed: isFirst
                 ? null
-                : () => ref
-                    .read(quizSessionProvider.notifier)
-                    .previousQuestion(),
+                : () =>
+                      ref.read(quizSessionProvider.notifier).previousQuestion(),
             variant: WittButtonVariant.outline,
             icon: Icons.arrow_back,
             size: WittButtonSize.sm,
@@ -329,9 +334,7 @@ class _QuizBottomBar extends ConsumerWidget {
           WittButton(
             label: session.isLastQuestion ? 'Submit' : 'Next',
             onPressed: hasAnswer
-                ? () => ref
-                    .read(quizSessionProvider.notifier)
-                    .nextQuestion()
+                ? () => ref.read(quizSessionProvider.notifier).nextQuestion()
                 : null,
             icon: session.isLastQuestion ? Icons.check : Icons.arrow_forward,
             size: WittButtonSize.sm,
@@ -422,7 +425,9 @@ class _QuizResultsView extends ConsumerWidget {
                     const SizedBox(height: WittSpacing.xs),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: WittColors.xp.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -443,8 +448,7 @@ class _QuizResultsView extends ConsumerWidget {
             // Question review
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: WittSpacing.lg),
+                padding: const EdgeInsets.symmetric(horizontal: WittSpacing.lg),
                 child: Text(
                   'Review',
                   style: theme.textTheme.titleMedium?.copyWith(
@@ -453,34 +457,31 @@ class _QuizResultsView extends ConsumerWidget {
                 ),
               ),
             ),
-            const SliverToBoxAdapter(
-                child: SizedBox(height: WittSpacing.sm)),
+            const SliverToBoxAdapter(child: SizedBox(height: WittSpacing.sm)),
             SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final q = session.questions[index];
-                  final selected = session.answers[q.id] ?? [];
-                  final isCorrect = selected.isNotEmpty &&
-                      selected
-                          .toSet()
-                          .containsAll(q.correctAnswerIds.toSet()) &&
-                      q.correctAnswerIds
-                          .toSet()
-                          .containsAll(selected.toSet());
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final q = session.questions[index];
+                final selected = session.answers[q.id] ?? [];
+                final isCorrect =
+                    selected.isNotEmpty &&
+                    selected.toSet().containsAll(q.correctAnswerIds.toSet()) &&
+                    q.correctAnswerIds.toSet().containsAll(selected.toSet());
 
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(WittSpacing.lg, 0,
-                        WittSpacing.lg, WittSpacing.sm),
-                    child: _ReviewTile(
-                      question: q,
-                      selectedIds: selected,
-                      isCorrect: isCorrect,
-                      index: index,
-                    ),
-                  );
-                },
-                childCount: session.questions.length,
-              ),
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    WittSpacing.lg,
+                    0,
+                    WittSpacing.lg,
+                    WittSpacing.sm,
+                  ),
+                  child: _ReviewTile(
+                    question: q,
+                    selectedIds: selected,
+                    isCorrect: isCorrect,
+                    index: index,
+                  ),
+                );
+              }, childCount: session.questions.length),
             ),
 
             // Actions
@@ -500,9 +501,15 @@ class _QuizResultsView extends ConsumerWidget {
                         label: 'Retake Quiz',
                         onPressed: () {
                           final config = session.config;
-                          ref
-                              .read(quizSessionProvider.notifier)
-                              .startQuiz(config);
+                          if (config.source == QuizSource.aiGenerated) {
+                            ref
+                                .read(quizSessionProvider.notifier)
+                                .startQuizAi(config);
+                          } else {
+                            ref
+                                .read(quizSessionProvider.notifier)
+                                .startQuiz(config);
+                          }
                         },
                         icon: Icons.refresh,
                       ),
@@ -513,9 +520,7 @@ class _QuizResultsView extends ConsumerWidget {
                       child: WittButton(
                         label: 'New Quiz',
                         onPressed: () {
-                          ref
-                              .read(quizSessionProvider.notifier)
-                              .resetQuiz();
+                          ref.read(quizSessionProvider.notifier).resetQuiz();
                           Navigator.of(context).pop();
                         },
                         variant: WittButtonVariant.outline,
