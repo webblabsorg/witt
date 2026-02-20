@@ -77,29 +77,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Logo / brand mark
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark
-                        ? WittColors.surfaceVariantDark
-                        : Colors.white,
-                    border: Border.all(
-                      color: isDark
-                          ? WittColors.outlineDark
-                          : WittColors.outline,
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: ClipOval(
-                    child: Image.asset(
-                      isDark
-                          ? 'assets/images/logo-white.png'
-                          : 'assets/images/logo-black.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+                Image.asset(
+                  isDark
+                      ? 'assets/images/logo-white.png'
+                      : 'assets/images/logo-black.png',
+                  width: 94,
+                  height: 94,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: WittSpacing.xxl),
                 Text(
@@ -216,16 +200,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ),
                 ),
 
-                // Anonymous / Skip
+                // Skip — no auth required
                 WittButton(
                   label: 'Skip for now',
                   variant: WittButtonVariant.outline,
-                  onPressed: () => _handleResult(
-                    () => ref
-                        .read(authNotifierProvider.notifier)
-                        .signInAnonymously(),
-                    destination: _roleDashboardDestination(),
-                  ),
+                  onPressed: () async {
+                    final dest = _roleDashboardDestination();
+                    await ref.read(onboardingProvider.notifier).complete();
+                    // ignore: use_build_context_synchronously
+                    if (mounted) context.go(dest);
+                  },
                   isFullWidth: true,
                   size: WittButtonSize.lg,
                 ),

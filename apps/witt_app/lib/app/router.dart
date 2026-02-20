@@ -264,10 +264,7 @@ String? computeRedirect({
   required AuthState auth,
   Map<String, String> queryParameters = const {},
 }) {
-  final isSignedIn =
-      auth.status == AuthStatus.authenticated ||
-      auth.status == AuthStatus.anonymous;
-  final onboardingDone = onboarding.isCompleted && isSignedIn;
+  final onboardingDone = onboarding.isCompleted;
 
   if (location == '/community') return '/social';
 

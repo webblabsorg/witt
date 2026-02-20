@@ -12,6 +12,7 @@ import '../../../core/translation/live_text.dart';
 enum _FlowStep {
   role,
   level,
+  purpose,
   country,
   exams,
   examDates,
@@ -43,6 +44,8 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
   List<String> _selectedSubjects = [];
   List<String> _selectedPrefs = [];
   List<String> _selectedGradeLevels = [];
+  List<String> _selectedPurposes = [];
+  String _countryQuery = '';
   final Set<String> _expandedContinents = <String>{
     'North America',
     'South America',
@@ -65,6 +68,17 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     'Graduate School',
     'Professional',
     'Other',
+  ];
+
+  static const _purposes = [
+    _Option('exam_prep', '🎯', 'Preparing for an exam'),
+    _Option('general_study', '📚', 'General study support'),
+    _Option('flashcards', '🃏', 'Creating flashcards'),
+    _Option('study_planning', '📅', 'Building a study timetable'),
+    _Option('progress_tracking', '📊', 'Tracking academic progress'),
+    _Option('study_habits', '🧠', 'Improving study habits'),
+    _Option('learn_topics', '💡', 'Learning new topics'),
+    _Option('productivity', '⏱️', 'Productivity & focus'),
   ];
 
   static const _prefs = [
@@ -127,9 +141,12 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     _selectedSubjects = List.from(data.subjects);
     _selectedPrefs = List.from(data.learningPrefs);
     _selectedGradeLevels = List.from(data.gradeLevels);
+    _selectedPurposes = List.from(data.learningPrefs);
     _childSetupType = data.childSetupType;
     _classSize = data.classSize;
   }
+
+  bool get _wantsExamPrep => _selectedPurposes.contains('exam_prep');
 
   Widget _buildParentSetup(ThemeData theme, bool isDark) {
     const options = [
@@ -462,6 +479,85 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     );
   }
 
+  Widget _buildPurposeStep(ThemeData theme, bool isDark, String continueLabel) {
+    return _StepWrapper(
+      title: 'What are you using Witt for?',
+      subtitle: 'Select all that apply — we\'ll tailor your experience.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ..._purposes.map((p) {
+            final isSelected = _selectedPurposes.contains(p.value);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: WittSpacing.sm),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedPurposes.remove(p.value);
+                    } else {
+                      _selectedPurposes.add(p.value);
+                    }
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: WittSpacing.lg,
+                    vertical: WittSpacing.md,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? WittColors.primaryContainer
+                        : (isDark
+                              ? WittColors.surfaceVariantDark
+                              : WittColors.surfaceVariant),
+                    borderRadius: WittSpacing.borderRadiusMd,
+                    border: Border.all(
+                      color: isSelected
+                          ? WittColors.primary
+                          : Colors.transparent,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(p.emoji, style: const TextStyle(fontSize: 22)),
+                      const SizedBox(width: WittSpacing.md),
+                      Expanded(
+                        child: Text(p.label, style: theme.textTheme.bodyLarge),
+                      ),
+                      if (isSelected)
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: WittColors.primary,
+                          size: 20,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: WittSpacing.xxl),
+          WittButton(
+            label: continueLabel,
+            onPressed: _selectedPurposes.isEmpty
+                ? null
+                : () async {
+                    await ref
+                        .read(onboardingProvider.notifier)
+                        .setLearningPrefs(_selectedPurposes);
+                    if (mounted) _next();
+                  },
+            isFullWidth: true,
+            size: WittButtonSize.lg,
+          ),
+        ],
+      ),
+    );
+  }
+
   List<_FlowStep> get _flowSteps {
     return switch (_selectedRole) {
       'parent' => [
@@ -487,9 +583,10 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
       _ => [
         _FlowStep.role,
         _FlowStep.level,
+        _FlowStep.purpose,
         _FlowStep.country,
-        _FlowStep.exams,
-        _FlowStep.examDates,
+        if (_wantsExamPrep) _FlowStep.exams,
+        if (_wantsExamPrep) _FlowStep.examDates,
         _FlowStep.studentPrefs,
         _FlowStep.notifications,
       ],
@@ -506,26 +603,14 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
 
   List<ExamDefinition> get _countrySpecificExams {
     final country = _selectedCountry;
-    if (country == null || country.isEmpty) {
-      return examCatalog
-          .where((e) => e.category == ExamCategory.countrySpecific)
-          .toList(growable: false);
-    }
-    final matched = examCatalog
+    if (country == null || country.isEmpty) return const [];
+    return examCatalog
         .where(
           (e) =>
               e.category == ExamCategory.countrySpecific &&
               e.countries.contains(country),
         )
         .toList(growable: false);
-    final unmatched = examCatalog
-        .where(
-          (e) =>
-              e.category == ExamCategory.countrySpecific &&
-              !e.countries.contains(country),
-        )
-        .toList(growable: false);
-    return [...matched, ...unmatched];
   }
 
   void _next() {
@@ -623,6 +708,7 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
       _FlowStep.role => _buildQ1(theme, isDark),
       _FlowStep.parentSetup => _buildParentSetup(theme, isDark),
       _FlowStep.level => _buildQ2(theme, isDark),
+      _FlowStep.purpose => _buildPurposeStep(theme, isDark, continueLabel),
       _FlowStep.country => _buildQ3(theme, isDark),
       _FlowStep.exams => _buildQ4(theme, isDark, continueLabel),
       _FlowStep.examDates => _buildQ5(theme, isDark, continueLabel),
@@ -863,14 +949,72 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
     );
   }
 
-  // Q3: Country
+  // Q3: Country — with search
   Widget _buildQ3(ThemeData theme, bool isDark) {
+    final query = _countryQuery.toLowerCase();
+    final hasQuery = query.isNotEmpty;
+
+    // When searching, show flat filtered list; otherwise show continent groups
+    List<String> filteredCountries = const [];
+    if (hasQuery) {
+      filteredCountries = onboardingContinents
+          .expand((g) => g.countries)
+          .where((c) => c.toLowerCase().contains(query))
+          .toList(growable: false);
+    }
+
     return _StepWrapper(
       title: "Where are you based?",
-      subtitle: 'Sets your currency and suggests relevant exams.',
+      subtitle: 'Sets your currency and suggests relevant content.',
       child: Column(
-        children: onboardingContinents
-            .map((group) {
+        children: [
+          // Search box
+          TextField(
+            onChanged: (v) => setState(() => _countryQuery = v),
+            decoration: InputDecoration(
+              hintText: 'Search countries…',
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              filled: true,
+              fillColor: isDark
+                  ? WittColors.surfaceVariantDark
+                  : WittColors.surfaceVariant,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: WittSpacing.md,
+                vertical: WittSpacing.sm,
+              ),
+            ),
+          ),
+          const SizedBox(height: WittSpacing.md),
+
+          if (hasQuery)
+            // Flat filtered results
+            ...filteredCountries.map((country) {
+              final isSelected = _selectedCountry == country;
+              return ListTile(
+                title: Text(country),
+                trailing: isSelected
+                    ? const Icon(
+                        Icons.check_circle_rounded,
+                        color: WittColors.primary,
+                        size: 20,
+                      )
+                    : null,
+                onTap: () async {
+                  setState(() => _selectedCountry = country);
+                  await ref
+                      .read(onboardingProvider.notifier)
+                      .setCountry(country);
+                  if (mounted) _next();
+                },
+              );
+            })
+          else
+            // Continent-grouped list
+            ...onboardingContinents.map((group) {
               final expanded = _expandedContinents.contains(group.continent);
               return Container(
                 margin: const EdgeInsets.only(bottom: WittSpacing.md),
@@ -920,8 +1064,8 @@ class _WizardScreenState extends ConsumerState<WizardScreen> {
                       .toList(growable: false),
                 ),
               );
-            })
-            .toList(growable: false),
+            }),
+        ],
       ),
     );
   }
