@@ -17,14 +17,17 @@ import '../features/paywall/screens/free_trial_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/home/screens/search_screen.dart';
 import '../features/home/screens/notifications_screen.dart';
-import '../features/home/screens/play_hub_screen.dart';
+import '../features/games/screens/play_hub_screen.dart';
 import '../features/learn/screens/learn_home_screen.dart';
 import '../features/planner/screens/planner_screen.dart';
 import '../features/offline/screens/offline_screen.dart';
 import '../screens/sage/sage_screen.dart';
-import '../screens/social/social_screen.dart';
+import '../features/social/screens/social_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../features/progress/screens/progress_screen.dart';
+import '../features/teacher/screens/teacher_screen.dart';
+import '../features/teacher/screens/parent_screen.dart';
+import '../features/translation/screens/translation_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
@@ -128,6 +131,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'notifications',
                     builder: (_, __) => const NotificationsScreen(),
                   ),
+                  GoRoute(
+                    path: 'translate',
+                    builder: (_, __) => const TranslationScreen(),
+                  ),
                 ],
               ),
             ],
@@ -180,6 +187,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'progress',
                     builder: (_, __) => const ProgressScreen(),
+                  ),
+                  GoRoute(
+                    path: 'teacher',
+                    builder: (_, __) => const TeacherScreen(),
+                  ),
+                  GoRoute(
+                    path: 'parent',
+                    builder: (_, __) => const ParentScreen(),
                   ),
                 ],
               ),

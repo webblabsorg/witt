@@ -1,16 +1,4 @@
-Let me inspect the Subrail package before wiring it in:
 
-The Subrail directory is empty ([dev/](cci:9://file:///Users/aa/Documents/Projects/subrail/dev:0:0-0:0), [notes/](cci:9://file:///Users/aa/Documents/Projects/subrail/notes:0:0-0:0), [prod/](cci:9://file:///Users/aa/Documents/Projects/subrail/prod:0:0-0:0) all have 0 items). There's no SDK code to integrate yet.
-
-Fixing the docs — removing RevenueCat, replacing with Subrail, and noting the SDK is not yet populated:
-
-Also removing the RevenueCat reference in `Resolved Spec Conflicts` section:
-
-Committing and pushing:
-
-Pushed `939e1cb`. Here's the accurate current state:
-
----
 
 ## Purchase Flow — What's needed to unblock
 
@@ -21,4 +9,18 @@ The [PurchaseFlowNotifier](cci:2://file:///Users/aa/Documents/Projects/witt/pack
 2. Add path dep to `@/Users/aa/Documents/Projects/witt/packages/witt_monetization/pubspec.yaml`
 3. Replace the 3 simulated method bodies — signatures already match
 
-Everything else in Phase 3 is complete. Ready to start Phase 4 whenever you are.
+
+
+---
+
+## Remaining gaps summary
+
+### Implementation gaps
+- **None** (for Phase 3 scope).
+
+### Pre-launch ops checks (non-code)
+1. Ensure Subrail dashboard product IDs match app IDs:
+   - `witt_premium_monthly`
+   - `witt_premium_yearly`
+   - `exam_<examId>`
+2. Ensure `SUBRAIL_API_KEY` is set in each deployment env (`.env.dev/.env.staging/.env.prod`).
