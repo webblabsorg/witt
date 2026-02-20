@@ -1,14 +1,17 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/ai_models.dart';
 import '../router/ai_router.dart';
 
 // ── AiRouter singleton ────────────────────────────────────────────────────
 
-/// Override this in the app with real Supabase credentials.
+/// Reads Supabase credentials from dotenv (loaded by Bootstrap before any
+/// provider is accessed). No ProviderScope override needed.
 final aiRouterProvider = Provider<AiRouter>((ref) {
-  // Credentials injected at app startup via ProviderScope overrides.
-  throw UnimplementedError(
-      'aiRouterProvider must be overridden with real credentials');
+  return AiRouter(
+    supabaseUrl: dotenv.env['SUPABASE_URL'] ?? '',
+    supabaseAnonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  );
 });
 
 // ── Usage tracking ────────────────────────────────────────────────────────
@@ -33,9 +36,8 @@ class UsageNotifier extends Notifier<UsageRecord> {
   void _maybeResetDaily() {
     final now = DateTime.now().toUtc();
     final last = state.lastResetDate;
-    final sameDay = now.year == last.year &&
-        now.month == last.month &&
-        now.day == last.day;
+    final sameDay =
+        now.year == last.year && now.month == last.month && now.day == last.day;
     if (!sameDay) {
       state = UsageRecord(
         dailyMessages: 0,
@@ -56,8 +58,9 @@ class UsageNotifier extends Notifier<UsageRecord> {
       now.year > last.year || now.month > last.month;
 }
 
-final usageProvider =
-    NotifierProvider<UsageNotifier, UsageRecord>(UsageNotifier.new);
+final usageProvider = NotifierProvider<UsageNotifier, UsageRecord>(
+  UsageNotifier.new,
+);
 
 // ── Convenience: make an AI request with usage enforcement ────────────────
 
