@@ -5,6 +5,7 @@ import 'package:witt_monetization/witt_monetization.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../onboarding/onboarding_state.dart';
+import '../../../core/currency/currency_provider.dart';
 
 class PaywallScreen extends ConsumerWidget {
   const PaywallScreen({super.key});
@@ -15,6 +16,11 @@ class PaywallScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final purchaseFlow = ref.watch(purchaseFlowProvider);
     final products = ref.watch(productsProvider);
+
+    // Localized prices — GeoIP detected currency, parity for USD/EUR/GBP
+    final monthlyLocalized = ref.watch(localizedPriceProvider(9.99));
+    final yearlyLocalized = ref.watch(localizedPriceProvider(59.99));
+    final yearlyPerMonthLocalized = ref.watch(localizedPriceProvider(5.00));
 
     final monthly = products.firstWhere(
       (p) => p.plan == SubscriptionPlan.premiumMonthly,
@@ -125,7 +131,7 @@ class PaywallScreen extends ConsumerWidget {
               _PlanCard(
                 icon: '🔥',
                 title: 'PREMIUM MONTHLY',
-                price: '${monthly.localizedPrice}/mo',
+                price: '${monthlyLocalized.formatted}/mo',
                 titleColor: WittColors.primary,
                 isHighlighted: false,
                 badge: '7-day free trial',
@@ -151,8 +157,8 @@ class PaywallScreen extends ConsumerWidget {
               _PlanCard(
                 icon: '💎',
                 title: 'PREMIUM YEARLY',
-                price: '${yearly.localizedPrice}/yr',
-                subPrice: '\$5.00/mo',
+                price: '${yearlyLocalized.formatted}/yr',
+                subPrice: '${yearlyPerMonthLocalized.formatted}/mo',
                 titleColor: WittColors.primaryDark,
                 isHighlighted: true,
                 badge: 'SAVE 50% — BEST VALUE',

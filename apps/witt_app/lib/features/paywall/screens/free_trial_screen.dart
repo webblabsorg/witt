@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../onboarding/onboarding_state.dart';
+import '../../../core/currency/currency_provider.dart';
 
 class FreeTrialScreen extends ConsumerWidget {
   const FreeTrialScreen({super.key});
@@ -12,6 +13,8 @@ class FreeTrialScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final yearlyLocalized = ref.watch(localizedPriceProvider(59.99));
+    final yearlyPerMonthLocalized = ref.watch(localizedPriceProvider(5.00));
 
     return Scaffold(
       body: SafeArea(
@@ -97,7 +100,7 @@ class FreeTrialScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: WittSpacing.sm),
                     Text(
-                      'Then \$59.99/year (\$5.00/month)',
+                      'Then ${yearlyLocalized.formatted}/year (${yearlyPerMonthLocalized.formatted}/month)',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: isDark
                             ? WittColors.textSecondaryDark

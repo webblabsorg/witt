@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -10,6 +12,7 @@ import 'package:subrail_flutter/subrail_flutter.dart';
 
 import '../features/onboarding/onboarding_state.dart';
 import '../core/persistence/hive_boxes.dart';
+import '../core/currency/currency_service.dart';
 
 /// Initializes all services and runs the app.
 /// Single entry point — call Bootstrap.run(app) from main().
@@ -31,6 +34,9 @@ class Bootstrap {
     await Hive.initFlutter();
     await openOnboardingBox();
     await openPersistenceBoxes();
+
+    // Initialize currency service (GeoIP + OXR rates, non-blocking)
+    unawaited(CurrencyService.instance.init());
 
     // Initialize Supabase
     await Supabase.initialize(

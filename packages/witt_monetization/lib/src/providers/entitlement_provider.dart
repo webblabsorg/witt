@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:subrail_flutter/subrail_flutter.dart';
+import 'package:subrail_flutter/subrail_flutter.dart' hide Entitlement;
 import '../models/entitlement.dart';
 
 // ── Entitlement state ─────────────────────────────────────────────────────

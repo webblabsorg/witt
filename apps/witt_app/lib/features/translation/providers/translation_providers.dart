@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/translation_models.dart';
 import '../../../core/persistence/hive_boxes.dart';
 import '../../../core/analytics/analytics.dart';
+import '../../../core/translation/libre_translate_client.dart';
 
 // ── Supported languages ───────────────────────────────────────────────────
 
@@ -168,23 +169,22 @@ class TranslationNotifier extends Notifier<TranslationState> {
     final text = state.inputText.trim();
     if (text.isEmpty) return;
 
+    final srcLang = state.sourceLang;
+    final tgtLang = state.targetLang;
     state = state.copyWith(status: TranslationStatus.loading, error: null);
 
     try {
-      // In production: call Google Cloud Translation API or DeepL
-      // For offline: use TF Lite model bundled with app
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      final translated = _mockTranslate(
-        text,
-        state.sourceLang,
-        state.targetLang,
+      final translated = await LibreTranslateClient.instance.translate(
+        text: text,
+        sourceLang: srcLang,
+        targetLang: tgtLang,
       );
+
       final result = TranslationResult(
         sourceText: text,
         translatedText: translated,
-        sourceLang: state.sourceLang,
-        targetLang: state.targetLang,
+        sourceLang: srcLang,
+        targetLang: tgtLang,
         timestamp: DateTime.now(),
         isOffline: false,
       );
@@ -195,8 +195,7 @@ class TranslationNotifier extends Notifier<TranslationState> {
         result: result,
         history: newHistory,
       );
-      Analytics.translate(state.sourceLang, state.targetLang, false);
-      // Persist history to Hive
+      Analytics.translate(srcLang, tgtLang, false);
       translationBox.put(
         kKeyTranslationHistory,
         newHistory
@@ -212,7 +211,12 @@ class TranslationNotifier extends Notifier<TranslationState> {
             )
             .toList(),
       );
-    } catch (e) {
+    } on LibreTranslateException catch (e) {
+      state = state.copyWith(
+        status: TranslationStatus.error,
+        error: 'Translation failed: ${e.message}',
+      );
+    } catch (_) {
       state = state.copyWith(
         status: TranslationStatus.error,
         error: 'Translation failed. Check your connection.',
@@ -223,48 +227,6 @@ class TranslationNotifier extends Notifier<TranslationState> {
   void clearHistory() {
     state = state.copyWith(history: []);
     translationBox.put(kKeyTranslationHistory, <dynamic>[]);
-  }
-
-  /// Mock translation — replace with real API call in production
-  String _mockTranslate(String text, String from, String to) {
-    final translations = {
-      'fr': {
-        'hello': 'bonjour',
-        'world': 'monde',
-        'study': 'étudier',
-        'learn': 'apprendre',
-        'school': 'école',
-        'exam': 'examen',
-        'question': 'question',
-        'answer': 'réponse',
-      },
-      'es': {
-        'hello': 'hola',
-        'world': 'mundo',
-        'study': 'estudiar',
-        'learn': 'aprender',
-        'school': 'escuela',
-        'exam': 'examen',
-        'question': 'pregunta',
-        'answer': 'respuesta',
-      },
-      'ar': {
-        'hello': 'مرحبا',
-        'study': 'دراسة',
-        'learn': 'تعلم',
-        'school': 'مدرسة',
-        'exam': 'امتحان',
-      },
-    };
-
-    final lower = text.toLowerCase();
-    final langMap = translations[to];
-    if (langMap != null && langMap.containsKey(lower)) {
-      return langMap[lower]!;
-    }
-
-    // Fallback: prefix with target language indicator
-    return '[$to] $text';
   }
 }
 

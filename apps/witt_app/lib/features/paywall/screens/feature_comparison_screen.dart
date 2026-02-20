@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:witt_ui/witt_ui.dart';
 
 import '../../onboarding/onboarding_state.dart';
+import '../../../core/currency/currency_provider.dart';
 
 class FeatureComparisonScreen extends ConsumerWidget {
   const FeatureComparisonScreen({super.key});
@@ -29,6 +30,7 @@ class FeatureComparisonScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final monthlyLocalized = ref.watch(localizedPriceProvider(9.99));
 
     return Scaffold(
       body: SafeArea(
@@ -88,7 +90,7 @@ class FeatureComparisonScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: WittSpacing.sm),
                           Text(
-                            'Upgrade to Premium for \$9.99/mo',
+                            'Upgrade to Premium for ${monthlyLocalized.formatted}/mo',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: Colors.white.withAlpha(204),
                             ),
@@ -156,7 +158,7 @@ class FeatureComparisonScreen extends ConsumerWidget {
                     const SizedBox(height: WittSpacing.sm),
                     Center(
                       child: Text(
-                        'Total price: \$9.99/month',
+                        'Total price: ${monthlyLocalized.formatted}/month',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: isDark
                               ? WittColors.textSecondaryDark
